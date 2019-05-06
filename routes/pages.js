@@ -18,7 +18,7 @@ const mirrors = config.get('mirrors');
 const locales = config.get('locales');
 const regions = config.get('regions');
 const subdomains = config.get('subdomains');
-const selTags = config.get('articlesSelectedTags');
+const selTags = config.get('articlesSelectedTags') || [];
 
 prepareLocaleSet = (prefix, strict) => {
   const l = [];
