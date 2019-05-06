@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "build": "webpack -p",
-    "start": "node ./main-app",
+    "start": "node ./index",
     "webpack": "webpack-dev-server --mode development",
-    "start-dev": "NODE_ENV=development WEBPACK_ENV=true ./node_modules/nodemon/bin/nodemon.js ./main-app",
-    "start-dev-win": "set NODE_ENV=development&& set WEBPACK_ENV=true&& nodemon ./main-app",
-    "start-st-win": "set NODE_ENV=staging&& nodemon ./main-app",
+    "start-dev": "NODE_ENV=development WEBPACK_ENV=true ./node_modules/nodemon/bin/nodemon.js ./index",
+    "start-dev-win": "set NODE_ENV=development&& set WEBPACK_ENV=true&& nodemon ./index",
+    "start-st-win": "set NODE_ENV=staging&& nodemon ./index",
     "test": "mocha  --timeout 15000 --exit"
   },
   "dependencies": {
