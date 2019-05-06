@@ -15,7 +15,7 @@ const sequelize = new Sequelize(
       logging: false,
       native: false,
       dialectOptions: {
-        ssl: true,
+        ssl: db.ssl,
       },
       pool: {
         max: 5,
