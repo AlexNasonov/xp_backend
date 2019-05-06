@@ -12,7 +12,7 @@ const sequelize = new Sequelize(
       host: db.host,
       port: db.port,
       dialect: config.get('dbDialect'),
-      logging: false,
+      logging: (db.logging) ? console.log : false,
       native: false,
       dialectOptions: {
         ssl: db.ssl,
