@@ -43,7 +43,7 @@ setDefRL = (h) => {
       if (i[0] === h) rl = i[1].split('-');
     }
   }
-  return rl;
+  return rl.reverse();
 };
 
 setRLUrl = (reqPath, slice) =>{
@@ -72,7 +72,7 @@ setAlts = (locale, url) => {
 setData = (region, locale, instance, host, url) => {
   let h; let p;
   if (process.env.NODE_ENV === 'development' || process.env.TUNNEL_ENV) {
-    h = config.get('host')['development'];
+    h = config.get('host')['development']+':'+config.get('port');
     p = 'http://';
   } else {
     h = host;
