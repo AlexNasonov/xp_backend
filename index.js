@@ -1,9 +1,15 @@
 module.exports = (rootPath) => {
-
+  const customPaths = ['public', 'views', 'logs'];
   const path = require('path');
   const paths = {
     config: path.join(rootPath, 'config.json'),
   };
+
+  for (const i of customPaths) {
+    paths[i] = path.join(rootPath, i);
+  }
+
+  process.env.paths = paths;
 
   // config
   const config = require('./modules/config');
@@ -67,10 +73,8 @@ module.exports = (rootPath) => {
  */
 
 
-  for (const i of ['public', 'views', 'logs']) {
-    const p = path.join(rootPath, i);
-
-    paths[i] = p;
+  for (const i of customPaths) {
+    const p = paths[i];
 
     if (!fs.existsSync(p)) fs.mkdirSync(p);
 

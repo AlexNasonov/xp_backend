@@ -13,7 +13,7 @@ const chmodr = util.promisify(require('chmodr'));
 const Logger = require('../modules/logger');
 const log = new Logger(module);
 
-setPath = (p) => path.join(__dirname, `../public`, p || '');
+setPath = (p) => path.join(process.env.paths.public, p || '');
 
 module.exports = class FilesController {
   static async readDir(dpath) {
