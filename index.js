@@ -7,9 +7,8 @@ module.exports = (rootPath) => {
 
   for (const i of customPaths) {
     paths[i] = path.join(rootPath, i);
+    process.env[i+'Path'] = paths[i];
   }
-
-  process.env.paths = paths;
 
   // config
   const config = require('./modules/config');
