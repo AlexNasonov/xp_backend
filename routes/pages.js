@@ -107,6 +107,7 @@ setBlogPage = (subdomains, pageNumber, region, locale, host, url) => {
   const pn = (pageNumber) ? parseInt(pageNumber)-1 : 0;
   params.limit = 20;
   params.offset = pn*params.limit;
+  params.order = [['createdAt', 'DESC']];
   let data;
   return new Promise((resolve, reject)=>{
     models.Page.findOne({where: {
@@ -205,7 +206,7 @@ setIndexPage = (subdomains, region, locale, host, url) => {
 
 router.get(prepareLocaleSet('blog', true), leadTracer, (req, res, next) => {
   const [region, locale, url] = setRLUrl(req.path, 2);
-  setBlogPage(req.subdomains, req.query.data, region, locale, req.hostname, url)
+  setBlogPage(req.subdomains, req.query.page, region, locale, req.hostname, url)
       .then((data)=> {
         const d = data;
         d.base_url = data.base_url + `/`+data.locale+'-'+data.region;
@@ -270,7 +271,7 @@ router.get(prepareLocaleSet(), leadTracer, (req, res, next) => {
  */
 router.get('/blog', leadTracer, (req, res, next) => {
   const [region, locale] = setDefRL(req.hostname);
-  setBlogPage(req.subdomains, req.query.data, region, locale, req.hostname, '/blog')
+  setBlogPage(req.subdomains, req.query.page, region, locale, req.hostname, '/blog')
       .then((data)=> res.render('pages/blog', data))
       .catch((e) =>{
         log.error(e.message);
