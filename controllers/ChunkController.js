@@ -17,7 +17,7 @@ const Op = require('sequelize').Op;
 const Tag = Models.Tag;
 const Chunk = Models.Chunk;
 
-const dpath = path.join(__dirname, `../views/chunks`);
+const dpath = path.join(process.env.viewsPath, `/chunks`);
 const cpath = (id) => path.join(dpath, `./${id}.ejs`);
 
 module.exports = class ChunksController {

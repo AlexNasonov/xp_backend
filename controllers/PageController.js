@@ -17,7 +17,7 @@ const Op = require('sequelize').Op;
 const Tag = Models.Tag;
 const Page = Models.Page;
 
-const dpath = path.join(__dirname, `../views/pages`);
+const dpath = path.join(process.env.viewsPath, `/pages`);
 const cpath = (id) => path.join(dpath, `./${id}.ejs`);
 
 const ps = ['url', 'title', 'description', 'keywords', 'css', 'locale', 'published', 'subdomain'];
