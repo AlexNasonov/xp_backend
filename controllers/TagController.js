@@ -4,6 +4,8 @@ const models = require('../modules/sequelize');
 const Op = require('sequelize').Op;
 const cu = require('./ControllerUtilities');
 const Tag = models.Tag;
+const config = require ('../modules/config');
+const selTags = config.get('articlesSelectedTags') || [];
 
 module.exports = class TagController {
   /**

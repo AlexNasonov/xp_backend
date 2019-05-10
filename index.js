@@ -65,7 +65,10 @@ module.exports = (rootPath) => {
   const fs = require('fs');
   const chmodr = require('chmodr');
 
+  var compression = require('compression');
+
   const app = express();
+  app.use(compression());
 
   /**
  * APPLICATION SETUP
