@@ -74,21 +74,6 @@ module.exports = class TagController {
   }
 
   /**
-   * Get a number of entries, associated with an instance
-   * @param {Sequelize.Model} instance
-   * @param {number} limit
-   * @param {number} offset
-   * @param {string} order
-   * @param {boolean} desc
-   * @param {string} filter
-   * @return {Promise<string[]>}
-   */
-  static async getAllByInstance(instance, limit, offset, order, desc, filter) {
-    const options = this.setOptions(limit, offset, order, desc, filter);
-    return await instance.getTags(options);
-  }
-
-  /**
    *
    * @param {string} entity - one of entities (check config)
    * @param {string} id - a unique tag name that acts like a tag

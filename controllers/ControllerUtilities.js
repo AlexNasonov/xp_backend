@@ -22,5 +22,29 @@ module.exports = class ControllerUtilities {
     }
   }
 
+  static setPagesFilters(query) {
+    const res = {
+      filters: [],
+    };
+
+    for (const i of ['locale', 'subdomain']) {
+      if (query[i]) {
+        res.filters.push({
+          [i]: filter[i],
+        });
+      }
+    }
+
+    const pub = query['published'];
+    if (pub) {
+      res.filters.push({
+        published: (pub === 'true'),
+      });
+    }
+
+    if (query.tag) res.tags = JSON.parse(filter.tag);
+
+    return res;
+  }
 
 };

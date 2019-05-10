@@ -15,26 +15,39 @@ const eCtrls = {
   articles: require('../controllers/ArticleController'),
 };
 
-
-
 eCheck = function(req, res, next) {
   if (entities.indexOf(req.params.entity) === -1) res.sendStatus(404);
   else return next();
 };
 
-/**
- * GET LIST OF ITEMS
- */
-router.get('/:entity', access, eCheck, (req, res, next) => {
+setFilters = (query) => {
   const filters = {};
-
   for (const i of ['ID', 'URL', 'Header', 'Summary', 'Content', 'Tag', 'Locale', 'Subdomain', 'Published']) {
     const f = 'filter'+i;
-    filters[i] = req.query[f];
+    filters[i.toLowerCase()] = query[f];
   }
+  return filters;
+};
+
+/**
+ * OPERATIONS WITH A LIST OF ITEMS
+ */
+router.get('/:entity', access, eCheck, (req, res, next) => {
+  const filters = setFilters(req.query);
   eCtrls[req.params.entity]
       .getAll(parseInt(req.query.limit), parseInt(req.query.offset), req.query.order, req.query.desc, filters)
       .then((data) => res.status(200).json(data))
+      .catch((e) => {
+        res.status(500).json(e.message);
+      });
+});
+
+// TODO: add relevant functions to all controllers
+router.delete('/:entity', access, eCheck, (req, res, next) => {
+  const filters = setFilters(req.query);
+  eCtrls[req.params.entity]
+      .deleteAll(filters)
+      .then((n) => res.status(200).json({rows: n}))
       .catch((e) => {
         res.status(500).json(e.message);
       });

@@ -120,15 +120,14 @@ module.exports = class ChunksController {
       const o = (['createdAt', 'updatedAt'].includes(order)) ? order: 'id';
       const options = cu.setQueryOptions(limit, offset, o, desc);
       options.where = {};
-      if (filter.ID) options.where.id = {[Op.like]: '%'+filter.ID+'%'};
-
+      if (filter.id) options.where.id = {[Op.like]: '%'+filter.id+'%'};
       options.include = [{
         model: Tag,
         attributes: ['id'],
         through: {attributes: []},
       }];
 
-      if (filter.Tag) options.include[0].where = {id: JSON.parse(filter.Tag)};
+      if (filter.tag) options.include[0].where = {id: JSON.parse(filter.tag)};
 
       const d = await Chunk.findAndCountAll(options);
       const res = {count: d.count, rows: []};
@@ -194,6 +193,39 @@ module.exports = class ChunksController {
 
       const chunk = await Chunk.findByPk(id);
       if (chunk) await chunk.destroy();
+    } catch (e) {
+      log.error(e.message);
+      throw e;
+    }
+  }
+
+  static async deleteAll(filter) {
+    try {
+      const options = {
+        include: [{
+          model: Tag,
+          attributes: ['id'],
+          through: {attributes: []},
+        }],
+      };
+      const cf = cu.setPagesFilters(filter);
+
+      if (cf.length>0) options.where = {[Op.and]: cf};
+
+      if (cf.tags) options.include[0].where = {id: cf.tags};
+
+      const entries = await Chunk.findAndCountAll(options);
+      let deleted = 0;
+      if (entries.count > 0) {
+        for (const i of entries.rows) {
+          const f = cpath(i.id);
+          if (fs.existsSync(f)) await deleteFile(f);
+          await Chunk.destroy({where: {id: i.id}});
+          deleted++;
+        }
+      }
+      return deleted;
+
     } catch (e) {
       log.error(e.message);
       throw e;

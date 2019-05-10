@@ -13,7 +13,7 @@ const ps = ['url', 'title', 'description',
   'keywords', 'css', 'locale', 'published',
   'header', 'summary', 'body', 'subdomain'];
 
-module.exports = class TextsController {
+module.exports = class ArticlesController {
   /**
    * Prepare Text data
    * @param {Model} data - instance of a sequelize model
@@ -117,56 +117,44 @@ module.exports = class TextsController {
     try {
       const o = (['createdAt', 'updatedAt'].includes(order)) ? order : 'id';
       const options = cu.setQueryOptions(limit, offset, o, desc);
-
-      const filters = [];
-
-      for (const i of ['ID', 'URL']) {
-        if (filter[i]) {
-          filters.push({
-            [i.toLocaleLowerCase()]: {[Op.like]: '%' + filter[i] + '%'},
-          });
-        }
-      }
-
-      for (const i of ['Header', 'Summary']) {
-        const l = filter[i] || filter.Content;
-        if (l) {
-          filters.push({
-            [i.toLocaleLowerCase()]: {[Op.like]: '%' + l + '%'},
-          });
-        }
-      }
-
-      if (filter.Content) {
-        filters.push({
-          body: {[Op.like]: '%' + filter.Content + '%'},
-        });
-      }
-
-      for (const i of ['Locale', 'Subdomain']) {
-        if (filter[i]) {
-          filters.push({
-            [i.toLocaleLowerCase()]: filter[i],
-          });
-        }
-      }
-
-      const pub = filter['Published'];
-      if (pub) {
-        filters.push({
-          published: (pub === 'true'),
-        });
-      }
-
-      if (filters.length>0) options.where = {[Op.and]: filters};
-
       options.include = [{
         model: Tag,
         attributes: ['id'],
         through: {attributes: []},
       }];
 
-      if (filter.Tag) options.include[0].where = {id: JSON.parse(filter.Tag)};
+
+      let filters = [];
+
+      for (const i of ['id', 'url']) {
+        if (filter[i]) {
+          filters.push({
+            [i]: {[Op.like]: '%' + filter[i] + '%'},
+          });
+        }
+      }
+
+      for (const i of ['header', 'summary']) {
+        const l = filter[i] || filter.Content;
+        if (l) {
+          filters.push({
+            [i]: {[Op.like]: '%' + l + '%'},
+          });
+        }
+      }
+
+      if (filter.content) {
+        filters.push({
+          body: {[Op.like]: '%' + filter.content + '%'},
+        });
+      }
+
+      const cf = cu.setPagesFilters(filter);
+      filters = filters.concat(cf.filters);
+
+      if (filters.length>0) options.where = {[Op.and]: filters};
+
+      if (cf.tags) options.include[0].where = {id: cf.tags};
 
       const d = await Article.findAndCountAll(options);
       const res = {count: d.count, rows: []};
@@ -238,6 +226,28 @@ module.exports = class TextsController {
     try {
       const text = await Article.findByPk(id);
       if (text) await text.destroy();
+    } catch (e) {
+      log.error(e.message);
+      throw e;
+    }
+  }
+
+  static async deleteAll(filter) {
+    try {
+      const options = {
+        include: [{
+          model: Tag,
+          attributes: ['id'],
+          through: {attributes: []},
+        }],
+      };
+      const cf = cu.setPagesFilters(filter);
+
+      if (cf.length>0) options.where = {[Op.and]: cf};
+
+      if (cf.tags) options.include[0].where = {id: cf.tags};
+
+      return await Article.destroy(options);
     } catch (e) {
       log.error(e.message);
       throw e;

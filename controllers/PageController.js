@@ -149,42 +149,28 @@ module.exports = class PagesController {
     try {
       const o = (['createdAt', 'updatedAt'].includes(order)) ? order : 'id';
       const options = cu.setQueryOptions(limit, offset, o, desc);
-
-      const filters = [];
-
-      for (const i of ['ID', 'URL']) {
-        if (filter[i]) {
-          filters.push({
-            [i.toLocaleLowerCase()]: {[Op.like]: '%' + filter[i] + '%'},
-          });
-        }
-      }
-
-      for (const i of ['Locale', 'Subdomain']) {
-        if (filter[i]) {
-          filters.push({
-            [i.toLocaleLowerCase()]: filter[i],
-          });
-        }
-      }
-
-      const pub = filter['Published'];
-      if (pub) {
-        filters.push({
-          published: (pub === 'true'),
-        });
-      }
-
-
-      if (filters.length>0) options.where = {[Op.and]: filters};
-
       options.include = [{
         model: Tag,
         attributes: ['id'],
         through: {attributes: []},
       }];
 
-      if (filter.Tag) options.include[0].where = {id: JSON.parse(filter.Tag)};
+      let filters = [];
+
+      for (const i of ['id', 'url']) {
+        if (filter[i]) {
+          filters.push({
+            [i]: {[Op.like]: '%' + filter[i] + '%'},
+          });
+        }
+      }
+
+      const cf = cu.setPagesFilters(filter);
+      filters = filters.concat(cf.filters);
+
+      if (filters.length>0) options.where = {[Op.and]: filters};
+
+      if (cf.tags) options.include[0].where = {id: cf.tags};
 
       const d = await Page.findAndCountAll(options);
       const res = {count: d.count, rows: []};
@@ -260,6 +246,38 @@ module.exports = class PagesController {
 
       const page = await Page.findByPk(id);
       if (page) await page.destroy();
+    } catch (e) {
+      log.error(e.message);
+      throw e;
+    }
+  }
+
+  static async deleteAll(filter) {
+    try {
+      const options = {
+        include: [{
+          model: Tag,
+          attributes: ['id'],
+          through: {attributes: []},
+        }],
+      };
+      const cf = cu.setPagesFilters(filter);
+
+      if (cf.length>0) options.where = {[Op.and]: cf};
+
+      if (cf.tags) options.include[0].where = {id: cf.tags};
+
+      const entries = await Page.findAndCountAll(options);
+      let deleted = 0;
+      if (entries.count > 0) {
+        for (const i of entries.rows) {
+          const f = cpath(i.id);
+          if (fs.existsSync(f)) await deleteFile(f);
+          await Page.destroy({where: {id: i.id}});
+          deleted++;
+        }
+      }
+      return deleted;
     } catch (e) {
       log.error(e.message);
       throw e;
