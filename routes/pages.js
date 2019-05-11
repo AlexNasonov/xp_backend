@@ -147,7 +147,7 @@ setPostPage = (subdomains, region, locale, host, url, tag) =>{
           if (!article) reject(set404());
           const data = setData(region, locale, article, host, '/'+tag+url);
           data.content = article.body;
-          data.css = article.data.css;
+          data.css = article.page.css;
           data.pageId = article.pageId;
           resolve(data);
         })
@@ -218,6 +218,7 @@ router.get(prepareLocaleSet('blog', true), leadTracer, (req, res, next) => {
         return next(e);
       });
 });
+
 
 for (const tag of selTags) {
   router.get(prepareLocaleSet(tag+'/'), leadTracer, (req, res, next) => {
