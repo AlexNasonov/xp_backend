@@ -233,21 +233,34 @@ module.exports = class ArticlesController {
   }
 
   static async deleteAll(filter) {
+
     try {
       const options = {
+        where: {},
+        attributes: ['id'],
         include: [{
           model: Tag,
           attributes: ['id'],
           through: {attributes: []},
         }],
       };
+
       const cf = cu.setPagesFilters(filter);
 
-      if (cf.length>0) options.where = {[Op.and]: cf};
+      if (cf.filters.length>0) options.where = {[Op.and]: cf.filters};
 
       if (cf.tags) options.include[0].where = {id: cf.tags};
 
-      return await Article.destroy(options);
+      const f = await Article.findAndCountAll(options);
+      if (f.count === 0) return f.count;
+
+      const d = [];
+      for (const i of f.rows) {
+        d.push(i.id);
+      }
+
+      return await Article.destroy({where: {id: d}});
+
     } catch (e) {
       log.error(e.message);
       throw e;

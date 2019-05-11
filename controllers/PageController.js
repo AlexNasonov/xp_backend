@@ -255,29 +255,32 @@ module.exports = class PagesController {
   static async deleteAll(filter) {
     try {
       const options = {
+        where: {},
+        attributes: ['id'],
         include: [{
           model: Tag,
           attributes: ['id'],
           through: {attributes: []},
         }],
       };
+
       const cf = cu.setPagesFilters(filter);
 
-      if (cf.length>0) options.where = {[Op.and]: cf};
+      if (cf.filters.length>0) options.where = {[Op.and]: cf.filters};
 
       if (cf.tags) options.include[0].where = {id: cf.tags};
 
-      const entries = await Page.findAndCountAll(options);
-      let deleted = 0;
-      if (entries.count > 0) {
-        for (const i of entries.rows) {
-          const f = cpath(i.id);
-          if (fs.existsSync(f)) await deleteFile(f);
-          await Page.destroy({where: {id: i.id}});
-          deleted++;
-        }
+      const f = await Page.findAndCountAll(options);
+      if (f.count === 0) return f.count;
+
+      const d = [];
+      for (const i of f.rows) {
+        const p = cpath(i.id);
+        if (fs.existsSync(p)) await deleteFile(p);
+        d.push(i.id);
       }
-      return deleted;
+
+      return await Page.destroy({where: {id: d}});
     } catch (e) {
       log.error(e.message);
       throw e;

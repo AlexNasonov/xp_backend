@@ -30,7 +30,7 @@ module.exports = class ControllerUtilities {
     for (const i of ['locale', 'subdomain']) {
       if (query[i]) {
         res.filters.push({
-          [i]: filter[i],
+          [i]: query[i],
         });
       }
     }
@@ -42,8 +42,8 @@ module.exports = class ControllerUtilities {
       });
     }
 
-    if (query.tag) res.tags = JSON.parse(filter.tag);
 
+    if (query.tag) res.tags = JSON.parse(query.tag);
     return res;
   }
 
