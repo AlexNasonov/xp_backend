@@ -36,7 +36,6 @@ package-lock.json
 *.log
 /logs
 /sites
-run.js
 
 # System Files
 .DS_Store
