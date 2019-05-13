@@ -1,4 +1,4 @@
-module.exports = (rootPath) => {
+module.exports = (rootPath, certificate) => {
   const customPaths = ['public', 'views', 'logs'];
   const path = require('path');
   const paths = {
@@ -27,6 +27,7 @@ module.exports = (rootPath) => {
   const bodyParser = require('body-parser');
   const debug = require('debug')('http');
   const http = require('http');
+  const https = require('https');
 
   // system loggers
   const morganLogger = require('morgan');
@@ -178,7 +179,19 @@ module.exports = (rootPath) => {
   app.set('port', port);
 
   // create HTTP server.
-  const server = http.createServer(app);
+  let httpsOptions = undefined;
+  if (certificate) {
+    if (certificate.key && certificate.cert) {
+      httpsOptions = {
+        key: fs.readFileSync(certificate.key),
+        cert: fs.readFileSync(certificate.cert),
+      };
+    } else if (certificate.pfx) httpsOptions = {pfx: fs.readFileSync(certificate.pfx)};
+  }
+
+  const server = (httpsOptions)
+      ? https.createServer(httpsOptions, app)
+      : http.createServer(app);
   server.listen(port);
   server.on('error', onError);
   server.on('listening', onListening);
