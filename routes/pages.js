@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 const util = require('util');
 const readDir = util.promisify(fs.readdir);
-const readFile = util.promisify(fs.readFile);
 const router = express.Router();
 const LocalLogger = require('../modules/logger');
 const log = new LocalLogger(module);
@@ -29,24 +28,24 @@ prepareLocaleSet = (prefix, strict) => {
     l.push(ls);
   }
   for (const i of regions) {
-    let rs = `/en-${i}/${pr}`;
+    let rs = `/${locales[0]}-${i}/${pr}`;
     if (!strict) rs = rs+'*';
     l.push(rs);
   }
   return l;
 };
 
-setDefRL = (h) => {
-  let rl = [locales[0], regions[0]];
+setDefLR = (h) => {
+  let lr = [locales[0], regions[0]];
   if (h !== host) {
     for (const i of mirrors) {
-      if (i[0] === h) rl = i[1].split('-');
+      if (i[0] === h) lr = i[1].split('-');
     }
   }
-  return rl.reverse();
+  return lr;
 };
 
-setRLUrl = (reqPath, slice) =>{
+setLRUrl = (reqPath, slice) =>{
   const sPath = reqPath.split('/');
   const [locale, region] = sPath[1].split('-');
   const url = '/'+sPath.slice(slice).join('/');
@@ -205,7 +204,7 @@ setIndexPage = (subdomains, region, locale, host, url) => {
  */
 
 router.get(prepareLocaleSet('blog', true), leadTracer, (req, res, next) => {
-  const [region, locale, url] = setRLUrl(req.path, 2);
+  const [region, locale, url] = setLRUrl(req.path, 2);
   setBlogPage(req.subdomains, req.query.page, region, locale, req.hostname, url)
       .then((data)=> {
         const d = data;
@@ -213,7 +212,6 @@ router.get(prepareLocaleSet('blog', true), leadTracer, (req, res, next) => {
         return res.render('pages/blog', d);
       })
       .catch((e) =>{
-        if (e.status === 404) return res.status(e.status).send('URL not found');
         log.error(e.message);
         return next(e);
       });
@@ -222,7 +220,7 @@ router.get(prepareLocaleSet('blog', true), leadTracer, (req, res, next) => {
 
 for (const tag of selTags) {
   router.get(prepareLocaleSet(tag+'/'), leadTracer, (req, res, next) => {
-    const [region, locale, url] = setRLUrl(req.path, 3);
+    const [region, locale, url] = setLRUrl(req.path, 3);
     setPostPage(req.subdomains, region, locale, req.hostname, url, tag)
         .then((data)=> {
           const d = data;
@@ -230,7 +228,6 @@ for (const tag of selTags) {
           return res.render('pages/'+data.pageId, d);
         })
         .catch((e) =>{
-          if (e.status === 404) return res.status(e.status).send('URL not found');
           log.error(e.message);
           return next(e);
         });
@@ -239,7 +236,7 @@ for (const tag of selTags) {
 
 
 router.get(prepareLocaleSet(), leadTracer, (req, res, next) => {
-  const [region, locale, url] = setRLUrl(req.path, 2);
+  const [region, locale, url] = setLRUrl(req.path, 2);
   if (url === '/') {
     setIndexPage(req.subdomains, region, locale, req.hostname, url)
         .then((data)=> {
@@ -248,7 +245,6 @@ router.get(prepareLocaleSet(), leadTracer, (req, res, next) => {
           return res.render('pages/'+data.pageId, d);
         })
         .catch((e) =>{
-          if (e.status === 404) return res.status(e.status).send('URL not found');
           log.error(e.message);
           return next(e);
         });
@@ -260,7 +256,6 @@ router.get(prepareLocaleSet(), leadTracer, (req, res, next) => {
           return res.render('pages/'+data.pageId, d);
         })
         .catch((e) =>{
-          if (e.status === 404) return res.status(e.status).send('URL not found');
           log.error(e.message);
           return next(e);
         });
@@ -271,7 +266,7 @@ router.get(prepareLocaleSet(), leadTracer, (req, res, next) => {
  * LOCALE NOT DEFINED IN URL
  */
 router.get('/blog', leadTracer, (req, res, next) => {
-  const [region, locale] = setDefRL(req.hostname);
+  const [locale, region] = setDefLR(req.hostname);
   setBlogPage(req.subdomains, req.query.page, region, locale, req.hostname, '/blog')
       .then((data)=> res.render('pages/blog', data))
       .catch((e) =>{
@@ -280,57 +275,68 @@ router.get('/blog', leadTracer, (req, res, next) => {
       });
 });
 
+router.get('/sitemap.xml', leadTracer, (req, res, next) => {
+  const hn = req.hostname;
+  const file = (hn !== host)
+      ? path.join(process.env.publicPath, `./sitemaps/sitemap-${hn}.xml`)
+      : path.join(process.env.publicPath, `./sitemap.xml`);
+
+  res.sendFile(file);
+});
+
 for (const tag of selTags) {
   router.get('/'+tag+'/*', leadTracer, (req, res, next) => {
-    const [region, locale] = setDefRL(req.hostname);
+    const [locale, region] = setDefLR(req.hostname);
     const url = '/' + req.path.split('/').slice(2).join('/');
     setPostPage(req.subdomains, region, locale, req.hostname, url, tag).
         then((data) => res.render('pages/' + data.pageId, data)).
         catch((e) => {
-          if (e.status === 404) return res.status(e.status).send('URL not found');
           log.error(e.message);
           return next(e);
         });
   });
 }
 
-/* router.get('/kill', (req, res, next) => {
-  req.session.destroy();
-  res.status(200).send('Session destroyed');
-});*/
+router.get('/search', leadTracer, (req, res, next) => {
+  const [locale, region] = setDefLR(req.hostname);
+  const url = req.path;
+  setIndexPage(req.subdomains, region, locale, req.hostname, url)
+  .then((data)=> res.render('pages/'+data.pageId, data))
+  .catch((e) =>{
+    log.error(e.message);
+    return next(e);
+  });
+});
 
 router.get('/robots.txt', async (req, res, next) => {
-  let prefix = setDefRL(req.hostname)[1];
-  if (prefix === 'en') prefix = 'com';
+  const hn = req.hostname;
+  let prefix = (hn !== host) ? hn : '';
   const regex = new RegExp(`.*\(${prefix}_robots.txt)`, 'ig');
 
-  const dir = await readDir(path.join(__dirname, '../public'));
+  const dir = await readDir(process.env.publicPath);
   let file = dir.filter((elm) => elm.match(regex))[0];
+
   file = path.join(__dirname, `../public/${file}`);
-  file = await readFile(file, 'utf8');
-  res.set('Content-Type', 'text/plain; charset=utf-8');
-  res.send(file);
+  res.sendFile(file);
 });
 
 router.get('/', leadTracer, (req, res, next) => {
-  const [region, locale] = setDefRL(req.hostname);
+  const [locale, region] = setDefLR(req.hostname);
   const url = req.path;
   setIndexPage(req.subdomains, region, locale, req.hostname, url)
       .then((data)=> res.render('pages/'+data.pageId, data))
       .catch((e) =>{
-        if (e.status === 404) return res.status(e.status).send('URL not found');
         log.error(e.message);
         return next(e);
       });
 });
 
 router.get('/*', leadTracer, (req, res, next) => {
-  const [region, locale] = setDefRL(req.hostname);
+  const [locale, region] = setDefLR(req.hostname);
   const url = req.path;
   setCustomPage(req.subdomains, region, locale, req.hostname, url)
       .then((data)=> res.render('pages/'+data.pageId, data))
       .catch((e) =>{
-        if (e.status === 404) return res.status(e.status).send('URL not found');
         log.error(e.message);
         return next(e);
       });

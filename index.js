@@ -161,6 +161,7 @@ module.exports = (rootPath) => {
   // production error handler - no stacktraces leaked to user
   app.use(function(err, req, res, next) {
     const error = (['development', 'staging'].includes(app.get('env'))) ? err : {};
+    if (err.status === 404) res.redirect('/404');
     log.error(err.message);
     console.log(error);
     res.status(err.status || 500);

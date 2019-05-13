@@ -1,4 +1,4 @@
-module.exports = async (sitePath) => {
+module.exports = async (sitePath, https) => {
   const fs = require('fs');
   const fse = require('fs-extra');
   const req = require('request-promise-native').defaults({jar: true});
@@ -16,6 +16,8 @@ module.exports = async (sitePath) => {
   const login = 'media@flussonic.com';
   const password = 'eLxrnUfsiWc';
   const host = 'http://localhost:4000/api';
+  const prot = (https) ? 'https://' : 'http://';
+
 
   try {
     log.warn('[SITEMAP]: Sitemap generation started');
@@ -55,6 +57,7 @@ module.exports = async (sitePath) => {
             while (n<=pages) {
               entries = await getItems(e, l, n*100);
               li = li.concat(entries.body.rows);
+              log.info(`[SITEMAP]: locale "${l}" - more entries added, ${li.length} in a list`);
               n++;
             }
           }
@@ -78,39 +81,68 @@ module.exports = async (sitePath) => {
           for (const t of selTags) {
             if (i.tags.includes(t)) {
               tag = `/${t}${i.url}`;
-              li.push(tag);
+              li.push([i.subdomain, tag]);
             }
           }
         }
 
-        if (!tag) li.push(i.url);
+        if (!tag) li.push([i.subdomain, i.url]);
       }
       log.info(`[SITEMAP]: locale "${l}" - ${li.length} urls extracted`);
       links[l] = li;
     }
 
-    // create basic sitemaps
+    const sitemaps = [];
+
+    // create sitemaps (see routes/pages.js prepareLocaleSet)
     for (const l of locales) {
-      const fp = path.join(smPath, './sitemap-'+l+'.xml');
-      const ws = fs.createWriteStream(fp);
-      ws.write('<?xml version="1.0" encoding="UTF-8"?>\n' +
-          '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n\n', 'utf8');
-
-      for (const i of links[l]) {
-        const priority = (selTags.includes(i.split('/')[1])) ? '0.8' : '1.0';
-
-        ws.write('<url>\n' +
-            '    <loc>'+i+'</loc>\n' +
-            '    <lastmod>'+new Date().toLocaleString()+'</lastmod>\n' +
-            '    <changefreq>daily</changefreq>\n' +
-            '    <priority>'+priority+'</priority>\n' +
-            '</url>\n\n', 'utf8');
-      }
-
-      ws.write('</urlset>\n', 'utf8');
-      ws.end();
-      log.info(`[SITEMAP]: file ${fp} created`);
+      const prefix = `${l}-${l}`;
+      const name = `sitemap-${prefix}.xml`;
+      const fp = path.join(smPath, `./${name}`);
+      createFile(fp, links[l], config.host.production, '/'+prefix);
+      sitemaps.push(name);
     }
+
+    for (const i of regions) {
+      const l = locales[0];
+      const prefix = `${l}-${i}`;
+      const name = `sitemap-${prefix}.xml`;
+      const fp = path.join(smPath, `./${name}`);
+      createFile(fp, links[l], config.host.production, '/'+prefix);
+      sitemaps.push(name);
+    }
+
+    // create def sitemap
+    const name = `sitemap-default.xml`;
+    const fpDef = path.join(smPath, `./${name}`);
+    createFile(fpDef, links[locales[0]], config.host.production, '');
+    sitemaps.push(name);
+
+
+    // create mirrors sitemaps
+    for (const i of config.mirrors) {
+      const l = links[i[1].split('-')[0]];
+      const fp = path.join(smPath, `./sitemap-${i[0]}.xml`);
+      createFile(fp, l, i[0], '');
+    }
+
+    // create main sitemap
+    const fpMain = path.join(pubPath, `./sitemap.xml`);
+    const ws = fs.createWriteStream(fpMain);
+    ws.write('<?xml version="1.0" encoding="UTF-8"?>\n' +
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n\n', 'utf8');
+    for (const i of sitemaps) {
+      ws.write('<sitemap>\n' +
+          '    <loc>'+prot+config.host.production+'/sitemaps/'+i+'</loc>\n' +
+          '    <lastmod>'+new Date().toLocaleString()+'</lastmod>\n' +
+          '</sitemap>\n\n', 'utf8');
+    }
+    ws.write('</urlset>\n', 'utf8');
+    ws.end();
+    log.info(`[SITEMAP]: file ${fpMain} created`);
+
+    log.info(`[SITEMAP]: files generation completed`);
+
   } catch (err) {
     console.log(err);
     log.error('[SITEMAP]: Sitemap generation failed \n'+err);
@@ -133,14 +165,25 @@ module.exports = async (sitePath) => {
     return await req(params);
   }
 
-  function prepareLocaleSet() {
-    const l = [];
-    for (const i of locales) {
-      l.push(`${i}-${i}`);
+  function createFile(fp, links, host, prefix) {
+    const ws = fs.createWriteStream(fp);
+    ws.write('<?xml version="1.0" encoding="UTF-8"?>\n' +
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n\n', 'utf8');
+
+    for (const i of links) {
+      const priority = (selTags.includes(i[0].split('/')[1])) ? '0.8' : '1.0';
+      const sd = (i[0] !== config.subdomains[0]) ? i[0]+'.' : '';
+
+      ws.write('<url>\n' +
+          '    <loc>'+prot+sd+host+prefix+i[1]+'</loc>\n' +
+          '    <lastmod>'+new Date().toLocaleString()+'</lastmod>\n' +
+          '    <changefreq>daily</changefreq>\n' +
+          '    <priority>'+priority+'</priority>\n' +
+          '</url>\n\n', 'utf8');
     }
-    for (const i of regions) {
-      l.push(`en-${i}`);
-    }
-    return l;
-  };
+
+    ws.write('</urlset>\n', 'utf8');
+    ws.end();
+    log.info(`[SITEMAP]: file ${fp} created`);
+  }
 };
