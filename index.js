@@ -63,8 +63,7 @@ module.exports = (rootPath, certificate) => {
   const predefined = require('./modules/sequelize/predefined');
 
   // Set CHMOD for public folder, create logs folder
-  const fs = require('fs');
-  const chmodr = require('chmodr');
+  const fse = require('fs-extra');
 
   const compression = require('compression');
 
@@ -77,14 +76,7 @@ module.exports = (rootPath, certificate) => {
 
 
   for (const i of customPaths) {
-    const p = paths[i];
-
-    if (!fs.existsSync(p)) fs.mkdirSync(p);
-
-    chmodr(p, 0o777, (err) => {
-      if (err) log.error('Failed to execute chmod', err);
-      else log.info(i + ' folder CHMOD set');
-    });
+    fse.ensureDir(paths[i], 0o777);
   }
 
   // view engine setup
@@ -183,10 +175,10 @@ module.exports = (rootPath, certificate) => {
   if (certificate) {
     if (certificate.key && certificate.cert) {
       httpsOptions = {
-        key: fs.readFileSync(certificate.key),
-        cert: fs.readFileSync(certificate.cert),
+        key: fse.readFileSync(certificate.key),
+        cert: fse.readFileSync(certificate.cert),
       };
-    } else if (certificate.pfx) httpsOptions = {pfx: fs.readFileSync(certificate.pfx)};
+    } else if (certificate.pfx) httpsOptions = {pfx: fse.readFileSync(certificate.pfx)};
   }
 
   const server = (httpsOptions)

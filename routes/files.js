@@ -31,7 +31,7 @@ router.post('/dir', access, (req, res, next) => {
 });
 
 router.delete('/dir', access, (req, res, next) => {
-  FilesC.deleteDir(req.query.url)
+  FilesC.delete(req.query.url)
       .then(() => res.sendStatus(200))
       .catch((e) => {
         res.status(500).json(e.message);
@@ -45,19 +45,19 @@ router.post('/upload', access, (req, res, next)=>{
       .then(() => {
         const storage = multer.diskStorage(
             {
-              destination: path.join(__dirname, '../public', tmp),
+              destination: path.join(process.env.publicPath, tmp),
               filename: function( req, file, cb ) {
                 cb( null, Date.now() + '-' + file.originalname);
               },
             }
         );
 
-        const u = multer({
+        const mu = multer({
           storage: storage,
         }).single('file');
 
         return new Promise((resolve, reject) =>{
-          u(req, res, function(err) {
+          mu(req, res, function(err) {
             if (err) reject(err);
 
             resolve(FilesC.moveFile(req.file.filename, req.body.dir));
@@ -73,7 +73,7 @@ router.post('/upload', access, (req, res, next)=>{
 });
 
 router.delete('/file', access, (req, res, next) => {
-  FilesC.deleteFile(req.query.url)
+  FilesC.delete(req.query.url)
       .then(() => res.sendStatus(200))
       .catch((e) => {
         res.status(500).json(e.message);
