@@ -83,7 +83,7 @@ module.exports = class TagController {
    */
   static async delete(entity, id) {
     try {
-      if (entity === 'articles' && selTags.include(id)) throw new TypeError(`Tag ${id} is undestructable`);
+      if (entity === 'articles' && selTags.includes(id)) throw new TypeError(`Tag ${id} is undestructable`);
       const t = await this.get(entity, id);
       return await t.destroy();
     } catch (e) {

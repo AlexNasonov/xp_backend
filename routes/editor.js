@@ -42,7 +42,6 @@ router.get('/:entity', access, eCheck, (req, res, next) => {
       });
 });
 
-// TODO: add relevant functions to all controllers
 router.delete('/:entity', access, eCheck, (req, res, next) => {
   const filters = setFilters(req.query);
   eCtrls[req.params.entity]
