@@ -212,6 +212,7 @@ router.get(prepareLocaleSet('blog', true), leadTracer, (req, res, next) => {
         return res.render('pages/blog', d);
       })
       .catch((e) =>{
+        if (e.status === 404) res.redirect('/404');
         log.error(e.message);
         return next(e);
       });
@@ -228,6 +229,7 @@ for (const tag of selTags) {
           return res.render('pages/'+data.pageId, d);
         })
         .catch((e) =>{
+          if (e.status === 404) res.redirect('/404');
           log.error(e.message);
           return next(e);
         });
@@ -245,6 +247,7 @@ router.get(prepareLocaleSet(), leadTracer, (req, res, next) => {
           return res.render('pages/'+data.pageId, d);
         })
         .catch((e) =>{
+          if (e.status === 404) res.redirect('/404');
           log.error(e.message);
           return next(e);
         });
@@ -256,6 +259,7 @@ router.get(prepareLocaleSet(), leadTracer, (req, res, next) => {
           return res.render('pages/'+data.pageId, d);
         })
         .catch((e) =>{
+          if (e.status === 404) res.redirect('/404');
           log.error(e.message);
           return next(e);
         });
@@ -291,26 +295,28 @@ for (const tag of selTags) {
     setPostPage(req.subdomains, region, locale, req.hostname, url, tag).
         then((data) => res.render('pages/' + data.pageId, data)).
         catch((e) => {
+          if (e.status === 404) res.redirect('/404');
           log.error(e.message);
           return next(e);
         });
   });
 }
-
+/* TODO: search page
 router.get('/search', leadTracer, (req, res, next) => {
   const [locale, region] = setDefLR(req.hostname);
   const url = req.path;
   setIndexPage(req.subdomains, region, locale, req.hostname, url)
   .then((data)=> res.render('pages/'+data.pageId, data))
   .catch((e) =>{
+    if (e.status === 404) res.redirect('/404');
     log.error(e.message);
     return next(e);
   });
-});
+});*/
 
 router.get('/robots.txt', async (req, res, next) => {
   const hn = req.hostname;
-  let prefix = (hn !== host) ? hn : '';
+  const prefix = (hn !== host) ? hn : '';
   const regex = new RegExp(`.*\(${prefix}_robots.txt)`, 'ig');
 
   const dir = await readDir(process.env.publicPath);
@@ -326,6 +332,7 @@ router.get('/', leadTracer, (req, res, next) => {
   setIndexPage(req.subdomains, region, locale, req.hostname, url)
       .then((data)=> res.render('pages/'+data.pageId, data))
       .catch((e) =>{
+        if (e.status === 404) res.redirect('/404');
         log.error(e.message);
         return next(e);
       });
@@ -337,6 +344,7 @@ router.get('/*', leadTracer, (req, res, next) => {
   setCustomPage(req.subdomains, region, locale, req.hostname, url)
       .then((data)=> res.render('pages/'+data.pageId, data))
       .catch((e) =>{
+        if (e.status === 404) res.redirect('/404');
         log.error(e.message);
         return next(e);
       });

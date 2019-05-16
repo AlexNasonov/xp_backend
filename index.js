@@ -87,7 +87,7 @@ module.exports = (rootPath, certificate) => {
   app.use(bodyParser.json({limit: '50mb'}));
   app.use(bodyParser.urlencoded({limit: '50mb', extended: true, parameterLimit: 50000}));
   app.use(cookieParser(config.get('appName')));
-  app.use(express.static(paths.public));
+  app.use('/public', express.static(paths.public, {fallthrough: false}));
 
   // setup sessions
   app.use(session({
@@ -135,36 +135,22 @@ module.exports = (rootPath, certificate) => {
   app.use(passport.session());
   require('./modules/passport')(passport);
 
+  // error handlers
+  // development error handler will print stacktrace
+  // production error handler - no stacktraces leaked to user
+  app.use(function(err, req, res, next) {
+    const error = (['development', 'staging'].includes(app.get('env'))) ? err : {};
+    log.error(error.message);
+    res.status(error.status || 500);
+    res.send(error.message+'\n\n'+error);
+  });
+
   // use routes
   for (const i of Object.keys(routes.api)) {
     app.use('/api/' + i, routes.api[i]);
   }
   app.use('/', routes.pages);
 
-
-  // catch 404 and forward to error handler
-  app.use(function(req, res, next) {
-    const err = new Error('Not Found');
-    err.status = 404;
-    next(err);
-  });
-
-  // error handlers
-  // development error handler will print stacktrace
-  // production error handler - no stacktraces leaked to user
-  app.use(function(err, req, res, next) {
-    const error = (['development', 'staging'].includes(app.get('env'))) ? err : {};
-    if (err.status === 404) res.redirect('/404');
-    log.error(err.message);
-    console.log(error);
-    res.status(err.status || 500);
-    res.render('error', {
-      title: 'Error',
-      description: 'Error',
-      message: err.message,
-      error: error,
-    });
-  });
 
   // set port
   const port = normalizePort(process.env.PORT || config.get('port'));
