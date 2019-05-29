@@ -213,8 +213,10 @@ router.get(prepareLocaleSet('blog', true), leadTracer, (req, res, next) => {
       })
       .catch((e) =>{
         if (e.status === 404) res.redirect('/404');
-        log.error(e.message);
-        return next(e);
+        else {
+          log.error(e.message);
+          return next(e);
+        }
       });
 });
 
@@ -230,8 +232,10 @@ for (const tag of selTags) {
         })
         .catch((e) =>{
           if (e.status === 404) res.redirect('/404');
-          log.error(e.message);
-          return next(e);
+          else {
+            log.error(e.message);
+            return next(e);
+          }
         });
   });
 }
@@ -248,8 +252,10 @@ router.get(prepareLocaleSet(), leadTracer, (req, res, next) => {
         })
         .catch((e) =>{
           if (e.status === 404) res.redirect('/404');
-          log.error(e.message);
-          return next(e);
+          else {
+            log.error(e.message);
+            return next(e);
+          }
         });
   } else {
     setCustomPage(req.subdomains, region, locale, req.hostname, url)
@@ -260,8 +266,10 @@ router.get(prepareLocaleSet(), leadTracer, (req, res, next) => {
         })
         .catch((e) =>{
           if (e.status === 404) res.redirect('/404');
-          log.error(e.message);
-          return next(e);
+          else {
+            log.error(e.message);
+            return next(e);
+          }
         });
   }
 });
@@ -296,8 +304,10 @@ for (const tag of selTags) {
         then((data) => res.render('pages/' + data.pageId, data)).
         catch((e) => {
           if (e.status === 404) res.redirect('/404');
-          log.error(e.message);
-          return next(e);
+          else {
+            log.error(e.message);
+            return next(e);
+          }
         });
   });
 }
@@ -333,8 +343,10 @@ router.get('/', leadTracer, (req, res, next) => {
       .then((data)=> res.render('pages/'+data.pageId, data))
       .catch((e) =>{
         if (e.status === 404) res.redirect('/404');
-        log.error(e.message);
-        return next(e);
+        else {
+          log.error(e.message);
+          return next(e);
+        }
       });
 });
 
@@ -345,8 +357,10 @@ router.get('/*', leadTracer, (req, res, next) => {
       .then((data)=> res.render('pages/'+data.pageId, data))
       .catch((e) =>{
         if (e.status === 404) res.redirect('/404');
-        log.error(e.message);
-        return next(e);
+        else {
+          log.error(e.message);
+          return next(e);
+        }
       });
 });
 

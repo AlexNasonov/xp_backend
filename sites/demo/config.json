@@ -1,0 +1,74 @@
+{
+  "appName": "XP-demo-site",
+  "ed-host": {
+    "production": "editor-demo.xp-tech.pro",
+    "staging": "editor-demo.xp-tech.pro",
+    "development": "localhost:4200"
+  },
+
+  "host": {
+    "production": "demo.xp-tech.pro",
+    "staging": "demo.xp-tech.pro",
+    "development": "localhost"
+  },
+  "admin": "nasonov.alexey@gmail.com",
+  "port": 4000,
+  "database": {
+    "production": {
+      "name": "xp-demo",
+      "username": "xp-demo",
+      "password": "i5p01hwd1z5hvmzv",
+      "host": "db-postgresql-fra1-24407-do-user-2228616-0.db.ondigitalocean.com",
+      "port": 25060,
+      "ssl": true,
+      "logging": false
+    },
+    "staging": {
+      "name": "xp-demo",
+      "username": "xp-demo",
+      "password": "i5p01hwd1z5hvmzv",
+      "host": "db-postgresql-fra1-24407-do-user-2228616-0.db.ondigitalocean.com",
+      "port": 25060,
+      "ssl": true,
+      "logging": false
+    },
+    "development": {
+      "name": "xp-demo",
+      "username": "xp-demo",
+      "password": "i5p01hwd1z5hvmzv",
+      "host": "db-postgresql-fra1-24407-do-user-2228616-0.db.ondigitalocean.com",
+      "port": 25060,
+      "ssl": true,
+      "logging": false
+    }
+  },
+  "ipGeoKey": "2b2bd8acee085ebf975deeb06190a583",
+  "articlesSelectedTags":["news", "library"],
+  "dbDialect": "postgres",
+  "entities": [
+    "chunks", "pages", "articles"
+  ],
+  "subdomains": [
+    "@root", "demo2"
+  ],
+  "locales": [
+    "en", "ru"
+  ],
+  "regions": [
+    "us", "ru"
+  ],
+  "mirrors": [
+    ["demo-mirror.xp-tech.pro", "en-us"]
+  ],
+  "mailer": {
+    "host": "smtp.yandex.ru",
+    "port": 587,
+    "secure": false,
+    "auth": {
+      "user": "fake@xp-tech.pro",
+      "pass": "xp-tech.pro"
+    }
+  }
+}
+
+
