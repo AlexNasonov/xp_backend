@@ -51,6 +51,8 @@ module.exports = class PagesController {
     if (render) res.body = await ejs.renderFile(file);
     else res.body = await readFile(file, 'utf8');
     res.tags = cu.flatten('id', data.tags);
+    if (data.details && data.details.altLocale) res.altLocale = data.details.altLocale;
+
 
     return res;
   }
@@ -123,6 +125,7 @@ module.exports = class PagesController {
 
       const page = await Page.create(pd);
       if (data.tags) await page.setTags(data.tags);
+      if (data.altLocale) await page.updateDetails('altLocale', data.altLocale);
 
       return await this.get(id, false);
     } catch (e) {
@@ -218,6 +221,17 @@ module.exports = class PagesController {
           const tl = (data.tags.length > 0) ? data.tags : null;
           await page.setTags(tl);
         }
+
+        if (data.altLocale) {
+          const det = page.details;
+          const al = (det && det.altLocale) ? det.altLocale : {};
+          for (const i of Object.keys(data.altLocale)) {
+            al[i] = data.altLocale[i];
+          }
+          page.updateDetails('altLocale', al);
+        }
+
+
         return true;
       } else return false;
     } catch (e) {

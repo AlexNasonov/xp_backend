@@ -45,7 +45,7 @@ module.exports = function(sequelize, DataTypes) {
         indexes: [
           {
             unique: true,
-            fields: ['old', 'new', 'locale', 'subdomain'],
+            fields: ['old', 'locale', 'subdomain'],
           },
         ],
       });

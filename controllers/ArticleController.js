@@ -17,7 +17,7 @@ module.exports = class ArticlesController {
   /**
    * Prepare Text data
    * @param {Model} data - instance of a sequelize model
-   * @param {boolean} render
+   * @param {boolean} render //TODO: add or remove render feature
    * @return {Promise<*>}
    * @private
    */
@@ -38,6 +38,8 @@ module.exports = class ArticlesController {
     res.createdAt = data.createdAt;
     res.updatedAt = data.updatedAt;
     res.tags = cu.flatten('id', data.tags);
+
+    if (data.details && data.details.altLocale) res.altLocale = data.details.altLocale;
 
     return res;
   }
@@ -92,6 +94,7 @@ module.exports = class ArticlesController {
       const text = await Article.create(pd);
       if (data.tags) await text.setTags(data.tags);
       if (data.template) await text.setPage(await Models.Page.findByPk(data.template));
+      if (data.altLocale) await text.updateDetails('altLocale', data.altLocale);
 
       return await this.get(id, false);
     } catch (e) {
@@ -200,6 +203,14 @@ module.exports = class ArticlesController {
         }
 
         if (data.template) await text.setPage(await Models.Page.findByPk(data.template));
+        if (data.altLocale) {
+          const det = text.details;
+          const al = (det && det.altLocale) ? det.altLocale : {};
+          for (const i of Object.keys(data.altLocale)) {
+            al[i] = data.altLocale[i];
+          }
+          text.updateDetails('altLocale', al);
+        }
 
         return true;
       } else return false;
@@ -233,7 +244,6 @@ module.exports = class ArticlesController {
   }
 
   static async deleteAll(filter) {
-
     try {
       const options = {
         where: {},
@@ -260,7 +270,6 @@ module.exports = class ArticlesController {
       }
 
       return await Article.destroy({where: {id: d}});
-
     } catch (e) {
       log.error(e.message);
       throw e;

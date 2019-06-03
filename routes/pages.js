@@ -131,10 +131,17 @@ async function setBlogPage(subdomains, pageNumber, region, locale, host, url) {
 };
 
 
-async function setSearchPage(subdomains, pageNumber, region, locale, host, url) {
+async function setSearchPage(subdomains, pageNumber, region, locale, host, url, tags) {
   const preset = await setGeneratedPage(subdomains, pageNumber, region, locale, host, url, 20);
   const data = preset.data;
-  data.content = await models.Article.findAndCountAll(preset.params);
+  const params = preset.params;
+  params.include = [{
+    model: models.Tag,
+    attributes: ['id'],
+    through: {attributes: []},
+    where: {id: (tags)? JSON.parse(tags) : selTags[0]},
+  }];
+  data.content = await models.Article.findAndCountAll(params);
   return data;
 }
 
@@ -168,10 +175,10 @@ async function setArticlePage(subdomains, region, locale, host, url, tag) {
 };
 
 async function setCustomPage(subdomains, region, locale, host, url) {
-  const page = await models.Page.findOne(setParams(url, locale, subdomains));
-
+  const params = setParams(url, locale, subdomains);
+  const page = await models.Page.findOne(params);
   if (!page) {
-    const redirect = RedC.find(uri, params.where.locale, params.where.subdomain);
+    const redirect = RedC.find(url, params.where.locale, params.where.subdomain);
     if (redirect) return {redirect: redirect.new};
     else throw err404();
   } else if (!page.published) throw err404();
@@ -225,7 +232,7 @@ router.get(prepareLocaleSet('blog', true), leadTracer, (req, res, next) => {
 
 router.get(prepareLocaleSet('search', true), leadTracer, (req, res, next) => {
   const [region, locale, url] = setLRUrl(req.path, 2);
-  setSearchPage(req.subdomains, req.query.page, region, locale, req.hostname, url)
+  setSearchPage(req.subdomains, req.query.page, region, locale, req.hostname, url, req.query.tags)
       .then((data)=> {
         const d = data;
         d.base_url = data.base_url + `/`+data.locale+'-'+data.region;
@@ -304,18 +311,24 @@ router.get('/blog', leadTracer, (req, res, next) => {
   setBlogPage(req.subdomains, req.query.page, region, locale, req.hostname, '/blog')
       .then((data)=> res.render('pages/blog', data))
       .catch((e) =>{
-        log.error(e.message);
-        return next(e);
+        if (e.status === 404) res.redirect('/404');
+        else {
+          log.error(e.message);
+          return next(e);
+        }
       });
 });
 
 router.get('/search', leadTracer, (req, res, next) => {
   const [locale, region] = setDefLR(req.hostname);
-  setSearchPage(req.subdomains, req.query.page, region, locale, req.hostname, '/search')
+  setSearchPage(req.subdomains, req.query.page, region, locale, req.hostname, '/search', req.query.tags)
       .then((data)=> res.render('pages/search', data))
       .catch((e) =>{
-        log.error(e.message);
-        return next(e);
+        if (e.status === 404) res.redirect('/404');
+        else {
+          log.error(e.message);
+          return next(e);
+        }
       });
 });
 
