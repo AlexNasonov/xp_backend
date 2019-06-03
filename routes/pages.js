@@ -11,6 +11,8 @@ const leadTracer = require('../modules/leads').LeadTracer;
 
 const models = require('../modules/sequelize');
 
+const RedC = require('../controllers/RedirectController');
+
 const config = require('../modules/config');
 const host = config.get('host.production');
 const mirrors = config.get('mirrors');
@@ -55,7 +57,6 @@ setLRUrl = (reqPath, slice) =>{
 setParams = (url, locale, sd) => {
   const params = {where: {
     locale: locale,
-    published: true,
     subdomain: (sd && sd.length>0 && subdomains.includes(sd[0]))? sd[0] : subdomains[0],
   }};
   if (url) params.where.url = url;
@@ -95,40 +96,49 @@ setData = (region, locale, instance, host, url) => {
   };
 };
 
-set404 = () => {
+err404 = () => {
   const e = new Error();
   e.status = 404;
   return e;
 };
 
-setBlogPage = (subdomains, pageNumber, region, locale, host, url) => {
+async function setGeneratedPage(subdomains, pageNumber, region, locale, host, url, limit) {
   const params = setParams(false, locale, subdomains);
   const pn = (pageNumber) ? parseInt(pageNumber)-1 : 0;
-  params.limit = 20;
+  params.limit = limit;
   params.offset = pn*params.limit;
   params.order = [['createdAt', 'DESC']];
-  let data;
-  return new Promise((resolve, reject)=>{
-    models.Page.findOne({where: {
-      url: '/blog',
-    }})
-        .then((page) => {
-          if (!page) reject(set404());
-          data = setData(region, locale, page, host, '/blog');
-          return models.Article.findAndCountAll(params);
-        })
-        .then((articles) =>{
-          data.content = articles;
-          data.limit = params.limit;
-          resolve(data);
-        })
-        .catch((e) =>{
-          reject(e);
-        });
-  });
+
+  const page = await models.Page.findOne({where: {
+    url: url,
+  }});
+  if (!page || !page.published) throw err404();
+
+  const res = {
+    params: params,
+    data: setData(region, locale, page, host, url),
+  };
+  res.data.limit = limit;
+
+  return res;
+}
+
+async function setBlogPage(subdomains, pageNumber, region, locale, host, url) {
+  const preset = await setGeneratedPage(subdomains, pageNumber, region, locale, host, url, 20);
+  const data = preset.data;
+  data.content = await models.Article.findAndCountAll(preset.params);
+  return data;
 };
 
-setPostPage = (subdomains, region, locale, host, url, tag) =>{
+
+async function setSearchPage(subdomains, pageNumber, region, locale, host, url) {
+  const preset = await setGeneratedPage(subdomains, pageNumber, region, locale, host, url, 20);
+  const data = preset.data;
+  data.content = await models.Article.findAndCountAll(preset.params);
+  return data;
+}
+
+async function setArticlePage(subdomains, region, locale, host, url, tag) {
   const params = setParams(url, locale, subdomains);
   params.include = [{
     model: models.Page,
@@ -140,64 +150,57 @@ setPostPage = (subdomains, region, locale, host, url, tag) =>{
     through: {attributes: []},
     where: {id: tag},
   }];
-  return new Promise((resolve, reject) => {
-    models.Article.findOne(params)
-        .then((article) =>{
-          if (!article) reject(set404());
-          const data = setData(region, locale, article, host, '/'+tag+url);
-          data.content = article.body;
-          data.css = article.page.css;
-          data.pageId = article.pageId;
-          resolve(data);
-        })
-        .catch((e) =>{
-          reject(e);
-        });
-  });
+
+  const uri = '/'+tag+url;
+
+  const article = await models.Article.findOne(params);
+
+  if (!article) {
+    const redirect = RedC.find(uri, params.where.locale, params.where.subdomain);
+    if (redirect) return {redirect: redirect.new};
+    else throw err404();
+  } else if (!article.published) throw err404();
+  const data = setData(region, locale, article, host, uri);
+  data.content = article.body;
+  data.css = article.page.css;
+  data.pageId = article.pageId;
+  return data;
 };
 
-setCustomPage = (subdomains, region, locale, host, url) => {
-  return new Promise((resolve, reject) => {
-    models.Page.findOne(setParams(url, locale, subdomains))
-        .then((page) =>{
-          if (!page) reject(set404());
-          const data = setData(region, locale, page, host, url);
-          data.pageId = page.id;
-          resolve(data);
-        })
-        .catch((e) =>{
-          reject(e);
-        });
-  });
+async function setCustomPage(subdomains, region, locale, host, url) {
+  const page = await models.Page.findOne(setParams(url, locale, subdomains));
+
+  if (!page) {
+    const redirect = RedC.find(uri, params.where.locale, params.where.subdomain);
+    if (redirect) return {redirect: redirect.new};
+    else throw err404();
+  } else if (!page.published) throw err404();
+
+  const data = setData(region, locale, page, host, url);
+  data.pageId = page.id;
+  return data;
 };
 
 
-setIndexPage = (subdomains, region, locale, host, url) => {
-  let data;
-  return new Promise((resolve, reject) => {
-    models.Page.findOne(setParams(url, locale, subdomains))
-        .then((page) =>{
-          if (!page) reject(set404());
-          data = setData(region, locale, page, host, url);
-          data.pageId = page.id;
-          return models.Tag.findByPk('promo', {include: [{
-            model: models.Article,
-            where: {locale: locale},
-            attributes: ['url', 'header', 'summary', 'og_image_url', 'createdAt'],
-            through: {attributes: []},
-          }],
-          order: [[models.Article, 'header', 'ASC']],
-          });
-        })
-        .then((tag)=> {
-          data.promo = (tag) ? tag.articles : undefined;
-          resolve(data);
-        })
-        .catch((e) =>{
-          reject(e);
-        });
+async function setIndexPage(subdomains, region, locale, host, url) {
+  const page = await models.Page.findOne(setParams(url, locale, subdomains));
+  if (!page || !page.published) throw err404();
+
+  const data = setData(region, locale, page, host, url);
+  data.pageId = page.id;
+
+  const promo = await models.Tag.findByPk('promo', {include: [{
+    model: models.Article,
+    where: {locale: locale},
+    attributes: ['url', 'header', 'summary', 'og_image_url', 'createdAt'],
+    through: {attributes: []},
+  }],
+  order: [[models.Article, 'header', 'ASC']],
   });
+  data.promo = (promo) ? promo.articles : undefined;
+  return data;
 };
+
 
 /**
  * LOCALE DEFINED IN URL
@@ -220,12 +223,30 @@ router.get(prepareLocaleSet('blog', true), leadTracer, (req, res, next) => {
       });
 });
 
+router.get(prepareLocaleSet('search', true), leadTracer, (req, res, next) => {
+  const [region, locale, url] = setLRUrl(req.path, 2);
+  setSearchPage(req.subdomains, req.query.page, region, locale, req.hostname, url)
+      .then((data)=> {
+        const d = data;
+        d.base_url = data.base_url + `/`+data.locale+'-'+data.region;
+        return res.render('pages/search', d);
+      })
+      .catch((e) =>{
+        if (e.status === 404) res.redirect('/404');
+        else {
+          log.error(e.message);
+          return next(e);
+        }
+      });
+});
+
 
 for (const tag of selTags) {
   router.get(prepareLocaleSet(tag+'/'), leadTracer, (req, res, next) => {
     const [region, locale, url] = setLRUrl(req.path, 3);
-    setPostPage(req.subdomains, region, locale, req.hostname, url, tag)
+    setArticlePage(req.subdomains, region, locale, req.hostname, url, tag)
         .then((data)=> {
+          if (data.redirect) return res.redirect(data.redirect);
           const d = data;
           d.base_url = data.base_url + `/`+data.locale+'-'+data.region;
           return res.render('pages/'+data.pageId, d);
@@ -260,6 +281,7 @@ router.get(prepareLocaleSet(), leadTracer, (req, res, next) => {
   } else {
     setCustomPage(req.subdomains, region, locale, req.hostname, url)
         .then((data)=> {
+          if (data.redirect) return res.redirect(data.redirect);
           const d = data;
           d.base_url = data.base_url + `/`+data.locale+'-'+data.region;
           return res.render('pages/'+data.pageId, d);
@@ -287,6 +309,16 @@ router.get('/blog', leadTracer, (req, res, next) => {
       });
 });
 
+router.get('/search', leadTracer, (req, res, next) => {
+  const [locale, region] = setDefLR(req.hostname);
+  setSearchPage(req.subdomains, req.query.page, region, locale, req.hostname, '/search')
+      .then((data)=> res.render('pages/search', data))
+      .catch((e) =>{
+        log.error(e.message);
+        return next(e);
+      });
+});
+
 router.get('/sitemap.xml', leadTracer, (req, res, next) => {
   const hn = req.hostname;
   const file = (hn !== host)
@@ -300,8 +332,11 @@ for (const tag of selTags) {
   router.get('/'+tag+'/*', leadTracer, (req, res, next) => {
     const [locale, region] = setDefLR(req.hostname);
     const url = '/' + req.path.split('/').slice(2).join('/');
-    setPostPage(req.subdomains, region, locale, req.hostname, url, tag).
-        then((data) => res.render('pages/' + data.pageId, data)).
+    setArticlePage(req.subdomains, region, locale, req.hostname, url, tag).
+        then((data) => {
+          if (data.redirect) return res.redirect(data.redirect);
+          else res.render('pages/' + data.pageId, data);
+        }).
         catch((e) => {
           if (e.status === 404) res.redirect('/404');
           else {
@@ -311,18 +346,6 @@ for (const tag of selTags) {
         });
   });
 }
-/* TODO: search page
-router.get('/search', leadTracer, (req, res, next) => {
-  const [locale, region] = setDefLR(req.hostname);
-  const url = req.path;
-  setIndexPage(req.subdomains, region, locale, req.hostname, url)
-  .then((data)=> res.render('pages/'+data.pageId, data))
-  .catch((e) =>{
-    if (e.status === 404) res.redirect('/404');
-    log.error(e.message);
-    return next(e);
-  });
-});*/
 
 router.get('/robots.txt', async (req, res, next) => {
   const hn = req.hostname;
@@ -354,7 +377,10 @@ router.get('/*', leadTracer, (req, res, next) => {
   const [locale, region] = setDefLR(req.hostname);
   const url = req.path;
   setCustomPage(req.subdomains, region, locale, req.hostname, url)
-      .then((data)=> res.render('pages/'+data.pageId, data))
+      .then((data)=> {
+        if (data.redirect) return res.redirect(data.redirect);
+        else res.render('pages/'+data.pageId, data);
+      })
       .catch((e) =>{
         if (e.status === 404) res.redirect('/404');
         else {

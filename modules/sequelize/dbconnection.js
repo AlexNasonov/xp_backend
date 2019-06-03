@@ -32,6 +32,7 @@ const Chunk = sequelize.import(path.join(__dirname, 'models/chunk'));
 const Page = sequelize.import(path.join(__dirname, 'models/page'));
 const Article = sequelize.import(path.join(__dirname, 'models/article'));
 const Lead = sequelize.import(path.join(__dirname, 'models/lead'));
+const Redirect = sequelize.import(path.join(__dirname, 'models/redirect'));
 
 Chunk.belongsToMany(Tag, {through: 'chunk_tags'});
 Tag.belongsToMany(Chunk, {through: 'chunk_tags'});
@@ -54,3 +55,4 @@ exports.Chunk = Chunk;
 exports.Page = Page;
 exports.Article = Article;
 exports.Lead = Lead;
+exports.Redirect = Redirect;

@@ -43,7 +43,7 @@
     }
   },
   "ipGeoKey": "2b2bd8acee085ebf975deeb06190a583",
-  "articlesSelectedTags":["news", "library"],
+  "articlesSelectedTags":["post", "doc"],
   "dbDialect": "postgres",
   "entities": [
     "chunks", "pages", "articles"

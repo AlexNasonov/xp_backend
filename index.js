@@ -56,6 +56,7 @@ module.exports = (rootPath, certificate) => {
       entrance: require('./routes/entrance'),
       editor: require('./routes/editor'),
       files: require('./routes/files'),
+      redirects: require('./routes/redirects'),
       admin: require('./routes/admin'),
     },
   };
