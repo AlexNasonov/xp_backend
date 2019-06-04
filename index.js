@@ -22,6 +22,7 @@ module.exports = (rootPath, certificate) => {
  *  IMPORTS & VARIABLES
  */
   const express = require('express');
+  const favicon = require('serve-favicon');
   const cors = require('cors');
   const cookieParser = require('cookie-parser');
   const bodyParser = require('body-parser');
@@ -70,6 +71,7 @@ module.exports = (rootPath, certificate) => {
 
   const app = express();
   app.use(compression());
+  app.use(favicon(path.join(paths.public, 'favicon.ico')));
 
   /**
  * APPLICATION SETUP
