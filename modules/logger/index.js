@@ -19,7 +19,7 @@ module.exports = class Logger {
       transports: [
         new transports.Console({
           colorize: true,
-          level: env === 'development' ? 'debug' : 'error',
+          level: 'debug', // env === 'development' ? 'debug' : 'error',
         }),
         new transports.File({
           name: 'app-info',

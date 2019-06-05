@@ -4,6 +4,8 @@ const path = require('path');
 const util = require('util');
 const readDir = util.promisify(fs.readdir);
 const router = express.Router();
+const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 const LocalLogger = require('../modules/logger');
 const log = new LocalLogger(module);
 
@@ -20,6 +22,8 @@ const locales = config.get('locales');
 const regions = config.get('regions');
 const subdomains = config.get('subdomains');
 const selTags = config.get('articlesSelectedTags') || [];
+const blogTags = config.get('articlesBlogTags');
+const searchTags = config.get('articlesSearchTags');
 
 prepareLocaleSet = (prefix, strict) => {
   const l = [];
@@ -78,7 +82,6 @@ setData = (region, locale, instance, host, url) => {
     h = host;
     p = (process.env.NODE_ENV === 'staging') ? 'http://' : 'https://';
   }
-
   return {
     region: region,
     locale: locale,
@@ -93,6 +96,7 @@ setData = (region, locale, instance, host, url) => {
     url: url,
     base_url: p+h,
     alts: setAlts(locale, url),
+    altLocale: (instance.details) ? instance.details.altLocale : undefined,
   };
 };
 
@@ -126,12 +130,20 @@ async function setGeneratedPage(subdomains, pageNumber, region, locale, host, ur
 async function setBlogPage(subdomains, pageNumber, region, locale, host, url) {
   const preset = await setGeneratedPage(subdomains, pageNumber, region, locale, host, url, 20);
   const data = preset.data;
+  if (blogTags) {
+    preset.params.include = [{
+      model: models.Tag,
+      attributes: ['id'],
+      where: {id: blogTags},
+      through: {attributes: []},
+    }];
+  }
   data.content = await models.Article.findAndCountAll(preset.params);
   return data;
 };
 
 
-async function setSearchPage(subdomains, pageNumber, region, locale, host, url, tags) {
+async function setSearchPage(subdomains, pageNumber, region, locale, host, url, tags, q) {
   const preset = await setGeneratedPage(subdomains, pageNumber, region, locale, host, url, 20);
   const data = preset.data;
   const params = preset.params;
@@ -139,8 +151,27 @@ async function setSearchPage(subdomains, pageNumber, region, locale, host, url, 
     model: models.Tag,
     attributes: ['id'],
     through: {attributes: []},
-    where: {id: (tags)? JSON.parse(tags) : selTags[0]},
+    where: {id: (tags)? JSON.parse(tags) : searchTags},
   }];
+
+  params.where = {
+    body: {
+      [Op.like]: `%${q}%`,
+    },
+  };
+
+  // params.where = [Sequelize.literal(`MATCH (body) AGAINST(:searchQuery IN NATURAL LANGUAGE MODE)`), 'score'];
+  /* params.replacements = {
+    searchQuery: q
+  }*/
+
+  /*
+  Author.findAll({
+    attributes: { include:[[Sequelize.literal(`MATCH (name, altName) AGAINST('shakespeare' IN NATURAL LANGUAGE MODE)`), 'score']] },
+    where: Sequelize.literal(`MATCH (name, altName) AGAINST('shakespeare' IN NATURAL LANGUAGE MODE)`),
+    order:[[Sequelize.literal('score'), 'DESC']],
+  });*/
+
   data.content = await models.Article.findAndCountAll(params);
   return data;
 }
@@ -232,7 +263,7 @@ router.get(prepareLocaleSet('blog', true), leadTracer, (req, res, next) => {
 
 router.get(prepareLocaleSet('search', true), leadTracer, (req, res, next) => {
   const [region, locale, url] = setLRUrl(req.path, 2);
-  setSearchPage(req.subdomains, req.query.page, region, locale, req.hostname, url, req.query.tags)
+  setSearchPage(req.subdomains, req.query.page, region, locale, req.hostname, url, req.query.tags, req.query.q)
       .then((data)=> {
         const d = data;
         d.base_url = data.base_url + `/`+data.locale+'-'+data.region;
