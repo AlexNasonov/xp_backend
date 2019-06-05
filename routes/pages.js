@@ -154,25 +154,28 @@ async function setSearchPage(subdomains, pageNumber, region, locale, host, url, 
     where: {id: (tags)? JSON.parse(tags) : searchTags},
   }];
 
+  const results = await models.sequelize.query(`
+    SELECT *
+    FROM ${models.Article.tableName}
+    WHERE _search @@ plainto_tsquery('english', :query);
+  `, {
+    model: models.Article,
+    replacements: {query: q},
+  });
+
+  const ids = [];
+
+  for(const i of results) {
+    ids.push(i.id);
+  }
+
   params.where = {
-    body: {
-      [Op.like]: `%${q}%`,
-    },
+    id: ids,
+    locale: locale
   };
 
-  // params.where = [Sequelize.literal(`MATCH (body) AGAINST(:searchQuery IN NATURAL LANGUAGE MODE)`), 'score'];
-  /* params.replacements = {
-    searchQuery: q
-  }*/
-
-  /*
-  Author.findAll({
-    attributes: { include:[[Sequelize.literal(`MATCH (name, altName) AGAINST('shakespeare' IN NATURAL LANGUAGE MODE)`), 'score']] },
-    where: Sequelize.literal(`MATCH (name, altName) AGAINST('shakespeare' IN NATURAL LANGUAGE MODE)`),
-    order:[[Sequelize.literal('score'), 'DESC']],
-  });*/
-
   data.content = await models.Article.findAndCountAll(params);
+  data.content.query = q;
   return data;
 }
 
@@ -266,6 +269,7 @@ router.get(prepareLocaleSet('search', true), leadTracer, (req, res, next) => {
   setSearchPage(req.subdomains, req.query.page, region, locale, req.hostname, url, req.query.tags, req.query.q)
       .then((data)=> {
         const d = data;
+        console.log(d.content.query)
         d.base_url = data.base_url + `/`+data.locale+'-'+data.region;
         return res.render('pages/search', d);
       })

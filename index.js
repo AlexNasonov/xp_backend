@@ -112,9 +112,7 @@ module.exports = (rootPath, certificate) => {
   // sequelize({force:true}) used to destroy and rebuild DB each time on start
   if (!process.env.TEST_ENV) {
     sequelize.sync({force: false})
-        .then((_) => {
-          predefined.run();
-        });
+        .then((_) => predefined.run());
   }
 
   // setup CORS
