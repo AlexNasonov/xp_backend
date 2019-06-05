@@ -356,7 +356,7 @@ router.get('/blog', leadTracer, (req, res, next) => {
 
 router.get('/search', leadTracer, (req, res, next) => {
   const [locale, region] = setDefLR(req.hostname);
-  setSearchPage(req.subdomains, req.query.page, region, locale, req.hostname, '/search', req.query.tags)
+  setSearchPage(req.subdomains, req.query.page, region, locale, req.hostname, '/search', req.query.tags, req.query.q)
       .then((data)=> res.render('pages/search', data))
       .catch((e) =>{
         if (e.status === 404) res.redirect('/404');
