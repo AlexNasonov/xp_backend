@@ -16,7 +16,7 @@ const models = require('../modules/sequelize');
 const RedC = require('../controllers/RedirectController');
 
 const config = require('../modules/config');
-const host = config.get('host.production');
+const host = config.getEnv('host');
 const mirrors = config.get('mirrors');
 const locales = config.get('locales');
 const regions = config.get('regions');
