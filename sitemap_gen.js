@@ -1,4 +1,4 @@
-module.exports = async (sitePath, https) => {
+module.exports = async (sitePath, https, login, password, host) => {
   const fs = require('fs');
   const fse = require('fs-extra');
   const req = require('request-promise-native').defaults({jar: true});
@@ -12,10 +12,6 @@ module.exports = async (sitePath, https) => {
 
   const Logger = require('./modules/logger');
   const log = new Logger(module);
-
-  const login = 'media@flussonic.com';
-  const password = 'eLxrnUfsiWc';
-  const host = 'http://localhost:4000/api';
   const prot = (https) ? 'https://' : 'http://';
 
 
