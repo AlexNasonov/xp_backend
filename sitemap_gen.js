@@ -129,7 +129,7 @@ module.exports = async (sitePath, https, login, password, host) => {
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n\n', 'utf8');
     for (const i of sitemaps) {
       ws.write('<sitemap>\n' +
-          '    <loc>'+prot+config.host.production+'/sitemaps/'+i+'</loc>\n' +
+          '    <loc>'+prot+config.host.production+'/public/sitemaps/'+i+'</loc>\n' +
           '    <lastmod>'+new Date().toLocaleString()+'</lastmod>\n' +
           '</sitemap>\n\n', 'utf8');
     }
