@@ -4,8 +4,6 @@ const path = require('path');
 const util = require('util');
 const readDir = util.promisify(fs.readdir);
 const router = express.Router();
-const Sequelize = require('sequelize');
-const Op = Sequelize.Op;
 const LocalLogger = require('../modules/logger');
 const log = new LocalLogger(module);
 
