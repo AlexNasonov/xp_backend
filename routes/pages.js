@@ -4,8 +4,6 @@ const path = require('path');
 const util = require('util');
 const readDir = util.promisify(fs.readdir);
 const router = express.Router();
-const Sequelize = require('sequelize');
-const Op = Sequelize.Op;
 const LocalLogger = require('../modules/logger');
 const log = new LocalLogger(module);
 
@@ -198,7 +196,8 @@ async function setArticlePage(subdomains, region, locale, host, url, tag) {
   const article = await models.Article.findOne(params);
 
   if (!article) {
-    const redirect = RedC.find(uri, params.where.locale, params.where.subdomain);
+    const redirect = await RedC.find(uri, params.where.locale, params.where.subdomain);
+
     if (redirect) return {redirect: redirect.new};
     else throw err404();
   } else if (!article.published) throw err404();
@@ -213,7 +212,7 @@ async function setCustomPage(subdomains, region, locale, host, url) {
   const params = setParams(url, locale, subdomains);
   const page = await models.Page.findOne(params);
   if (!page) {
-    const redirect = RedC.find(url, params.where.locale, params.where.subdomain);
+    const redirect = await RedC.find(url, params.where.locale, params.where.subdomain);
     if (redirect) return {redirect: redirect.new};
     else throw err404();
   } else if (!page.published) throw err404();
@@ -270,7 +269,6 @@ router.get(prepareLocaleSet('search', true), leadTracer, (req, res, next) => {
   setSearchPage(req.subdomains, req.query.page, region, locale, req.hostname, url, req.query.tags, req.query.q)
       .then((data)=> {
         const d = data;
-        console.log(d.content.query)
         d.base_url = data.base_url + `/`+data.locale+'-'+data.region;
         return res.render('pages/search', d);
       })
