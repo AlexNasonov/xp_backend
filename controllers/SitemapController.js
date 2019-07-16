@@ -1,4 +1,5 @@
 const fse = require('fs-extra');
+const path = require('path');
 const pubPath = process.env.publicPath;
 const smPath = path.join(pubPath, './sitemaps');
 const config = require('../modules/config');
@@ -21,14 +22,13 @@ module.exports = class SitemapController {
       },
       limit: 100,
       offset: offset || 0,
-      attributes: ['url', 'subdomains'],
+      attributes: ['url', 'subdomain'],
       include: [{
         model: models.Tag,
         attributes: ['id'],
         through: {attributes: []},
       }],
     };
-
     return await model.findAndCountAll(params);
   }
 
@@ -67,25 +67,29 @@ module.exports = class SitemapController {
 
         for (const e of ['pages', 'articles']) {
           const limit = 100;
+
+          console.log('LIMIT', limit);
           let entries = await this.getItems(e, l, limit);
 
-          if (entries.body.count > 0) {
-            li = li.concat(entries.body.rows);
+          console.log('ENTRIES', entries.count);
 
-            const pages = Math.floor(entries.body.count/limit);
+          if (entries.count > 0) {
+            li = li.concat(entries.rows);
+
+            const pages = Math.floor(entries.count/limit);
             if (pages > 0 ) {
               let n = 1;
 
               while (n<=pages) {
                 entries = await this.getItems(e, l, limit, n*limit);
-                li = li.concat(entries.body.rows);
+                li = li.concat(entries.rows);
                 log.info(`[SITEMAP]: locale "${l}" - more entries added, ${li.length} in a list`);
                 n++;
               }
             }
           }
 
-          log.info(`[SITEMAP]: locale "${l}" - ${entries.body.count} ${e} found, ${li.length} in a list`);
+          log.info(`[SITEMAP]: locale "${l}" - ${entries.count} ${e} found, ${li.length} in a list`);
         }
 
         log.info(`[SITEMAP]: locale "${l}" - ${li.length} total items found`);
@@ -143,7 +147,7 @@ module.exports = class SitemapController {
 
 
       // create mirrors sitemaps
-      for (const i of config.mirrors) {
+      for (const i of config.get('mirrors')) {
         const l = links[i[1].split('-')[0]];
         const fp = path.join(smPath, `./sitemap-${i[0]}.xml`);
         this.createFile(fp, l, i[0], '');
@@ -151,12 +155,12 @@ module.exports = class SitemapController {
 
       // create main sitemap
       const fpMain = path.join(pubPath, `./sitemap.xml`);
-      const ws = fs.createWriteStream(fpMain);
+      const ws = fse.createWriteStream(fpMain);
       ws.write('<?xml version="1.0" encoding="UTF-8"?>\n' +
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n\n', 'utf8');
       for (const i of sitemaps) {
         ws.write('<sitemap>\n' +
-            '    <loc>'+prot+config.host.production+'/sitemaps/'+i+'</loc>\n' +
+            '    <loc>https://'+config.get('host')['production']+'/sitemaps/'+i+'</loc>\n' +
             '    <lastmod>'+new Date().toLocaleString()+'</lastmod>\n' +
             '</sitemap>\n\n', 'utf8');
       }
@@ -168,6 +172,8 @@ module.exports = class SitemapController {
 
 
     } catch (e) {
+      log.error(`[SITEMAP]: files generation failed. ${e}`);
+      console.log(e);
       process.env.sitemaps_worker = false;
     }
   }
@@ -175,7 +181,12 @@ module.exports = class SitemapController {
   static launchGenerator() {
     if (!process.env.sitemaps_worker) {
       process.env.sitemaps_worker = true;
-      setTimeout(SitemapController.generateSitemaps, 1000*60*5);
+      log.info(`[SITEMAP]: worker started`);
+      setTimeout(function() {
+        return Promise.resolve(SitemapController.generateSitemaps());
+      }, 1000*60*5);
+    } else {
+      log.info(`[SITEMAP]: worker already loaded`);
     }
   }
 };
