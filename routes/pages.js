@@ -97,6 +97,7 @@ setData = (region, locale, instance, host, url) => {
     base_url: p+h,
     alts: setAlts(locale, url),
     altLocale: (instance.details) ? instance.details.altLocale : undefined,
+    details: instance.details,
   };
 };
 

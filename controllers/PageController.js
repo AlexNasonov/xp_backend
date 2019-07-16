@@ -17,6 +17,8 @@ const Op = require('sequelize').Op;
 const Tag = Models.Tag;
 const Page = Models.Page;
 
+const sitemapC = require('./SitemapController');
+
 const dpath = path.join(process.env.viewsPath, `/pages`);
 const cpath = (id) => path.join(dpath, `./${id}.ejs`);
 
@@ -127,7 +129,9 @@ module.exports = class PagesController {
       if (data.tags) await page.setTags(data.tags);
       if (data.altLocale) await page.updateDetails('altLocale', data.altLocale);
 
-      return await this.get(id, false);
+      const res = await this.get(id, false);
+      sitemapC.launchGenerator();
+      return res;
     } catch (e) {
       if (fs.existsSync(f)) await deleteFile(f);
       if (e.message === 'Validation error') {
@@ -231,7 +235,7 @@ module.exports = class PagesController {
           page.updateDetails('altLocale', al);
         }
 
-
+        sitemapC.launchGenerator();
         return true;
       } else return false;
     } catch (e) {
@@ -260,6 +264,7 @@ module.exports = class PagesController {
 
       const page = await Page.findByPk(id);
       if (page) await page.destroy();
+      sitemapC.launchGenerator();
     } catch (e) {
       log.error(e.message);
       throw e;
@@ -294,7 +299,9 @@ module.exports = class PagesController {
         d.push(i.id);
       }
 
-      return await Page.destroy({where: {id: d}});
+      const res = await Page.destroy({where: {id: d}});
+      sitemapC.launchGenerator();
+      return res;
     } catch (e) {
       log.error(e.message);
       throw e;

@@ -9,6 +9,8 @@ const Op = require('sequelize').Op;
 const Tag = Models.Tag;
 const Article = Models.Article;
 
+const sitemapC = require('./SitemapController');
+
 const ps = ['url', 'title', 'description',
   'keywords', 'css', 'locale', 'published',
   'header', 'summary', 'body', 'subdomain'];
@@ -96,7 +98,10 @@ module.exports = class ArticlesController {
       if (data.template) await text.setPage(await Models.Page.findByPk(data.template));
       if (data.altLocale) await text.updateDetails('altLocale', data.altLocale);
 
-      return await this.get(id, false);
+
+      const res = await this.get(id, false);
+      sitemapC.launchGenerator();
+      return res;
     } catch (e) {
       if (e.message === 'Validation error') {
         e.status = 409;
@@ -212,6 +217,8 @@ module.exports = class ArticlesController {
           text.updateDetails('altLocale', al);
         }
 
+        sitemapC.launchGenerator();
+
         return true;
       } else return false;
     } catch (e) {
@@ -237,6 +244,7 @@ module.exports = class ArticlesController {
     try {
       const text = await Article.findByPk(id);
       if (text) await text.destroy();
+      sitemapC.launchGenerator();
     } catch (e) {
       log.error(e.message);
       throw e;
@@ -269,7 +277,9 @@ module.exports = class ArticlesController {
         d.push(i.id);
       }
 
-      return await Article.destroy({where: {id: d}});
+      const res = await Article.destroy({where: {id: d}});
+      sitemapC.launchGenerator();
+      return res;
     } catch (e) {
       log.error(e.message);
       throw e;
