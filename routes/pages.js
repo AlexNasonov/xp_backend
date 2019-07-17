@@ -53,12 +53,12 @@ setLRUrl = (reqPath, slice) =>{
   const sPath = reqPath.split('/');
   const [locale, region] = sPath[1].split('-');
   const url = '/'+sPath.slice(slice).join('/');
-  return [region, locale, url];
+  return [locale, region, url];
 };
 
 setParams = (url, locale, sd) => {
   const params = {where: {
-    locale: locale,
+    locale: locale || locales[0],
     subdomain: (sd && sd.length>0 && subdomains.includes(sd[0]))? sd[0] : subdomains[0],
   }};
   if (url) params.where.url = url;
@@ -103,6 +103,20 @@ err404 = () => {
   const e = new Error();
   e.status = 404;
   return e;
+};
+
+render404 = (req, res, next, localeDefined) =>{
+  const lrData = (localeDefined)? setLRUrl(req.path, 2) : setDefLR(req.hostname);
+  const [locale, region] = [lrData[0], lrData[1]];
+
+  setCustomPage(req.subdomains, region, locale, req.hostname, '/404')
+      .then((data)=> {
+        return res.render('pages/'+data.pageId, data);
+      })
+      .catch((e) =>{
+        log.error(e.message);
+        return next(e);
+      });
 };
 
 async function setGeneratedPage(subdomains, pageNumber, region, locale, host, url, limit) {
@@ -164,13 +178,13 @@ async function setSearchPage(subdomains, pageNumber, region, locale, host, url, 
 
   const ids = [];
 
-  for(const i of results) {
+  for (const i of results) {
     ids.push(i.id);
   }
 
   params.where = {
     id: ids,
-    locale: locale
+    locale: locale,
   };
 
   data.content = await models.Article.findAndCountAll(params);
@@ -248,7 +262,7 @@ async function setIndexPage(subdomains, region, locale, host, url) {
  */
 
 router.get(prepareLocaleSet('blog', true), leadTracer, (req, res, next) => {
-  const [region, locale, url] = setLRUrl(req.path, 2);
+  const [locale, region, url] = setLRUrl(req.path, 2);
   setBlogPage(req.subdomains, req.query.page, region, locale, req.hostname, url)
       .then((data)=> {
         const d = data;
@@ -256,7 +270,7 @@ router.get(prepareLocaleSet('blog', true), leadTracer, (req, res, next) => {
         return res.render('pages/blog', d);
       })
       .catch((e) =>{
-        if (e.status === 404) res.redirect('/404');
+        if (e.status === 404) return render404(req, res, next, true);
         else {
           log.error(e.message);
           return next(e);
@@ -265,7 +279,7 @@ router.get(prepareLocaleSet('blog', true), leadTracer, (req, res, next) => {
 });
 
 router.get(prepareLocaleSet('search', true), leadTracer, (req, res, next) => {
-  const [region, locale, url] = setLRUrl(req.path, 2);
+  const [locale, region, url] = setLRUrl(req.path, 2);
   setSearchPage(req.subdomains, req.query.page, region, locale, req.hostname, url, req.query.tags, req.query.q)
       .then((data)=> {
         const d = data;
@@ -273,7 +287,7 @@ router.get(prepareLocaleSet('search', true), leadTracer, (req, res, next) => {
         return res.render('pages/search', d);
       })
       .catch((e) =>{
-        if (e.status === 404) res.redirect('/404');
+        if (e.status === 404) return render404(req, res, next, true);
         else {
           log.error(e.message);
           return next(e);
@@ -284,7 +298,7 @@ router.get(prepareLocaleSet('search', true), leadTracer, (req, res, next) => {
 
 for (const tag of selTags) {
   router.get(prepareLocaleSet(tag+'/'), leadTracer, (req, res, next) => {
-    const [region, locale, url] = setLRUrl(req.path, 3);
+    const [locale, region, url] = setLRUrl(req.path, 3);
     setArticlePage(req.subdomains, region, locale, req.hostname, url, tag)
         .then((data)=> {
           if (data.redirect) return res.redirect(data.redirect);
@@ -293,7 +307,7 @@ for (const tag of selTags) {
           return res.render('pages/'+data.pageId, d);
         })
         .catch((e) =>{
-          if (e.status === 404) res.redirect('/404');
+          if (e.status === 404) return render404(req, res, next, true);
           else {
             log.error(e.message);
             return next(e);
@@ -304,7 +318,7 @@ for (const tag of selTags) {
 
 
 router.get(prepareLocaleSet(), leadTracer, (req, res, next) => {
-  const [region, locale, url] = setLRUrl(req.path, 2);
+  const [locale, region, url] = setLRUrl(req.path, 2);
   if (url === '/') {
     setIndexPage(req.subdomains, region, locale, req.hostname, url)
         .then((data)=> {
@@ -313,7 +327,7 @@ router.get(prepareLocaleSet(), leadTracer, (req, res, next) => {
           return res.render('pages/'+data.pageId, d);
         })
         .catch((e) =>{
-          if (e.status === 404) res.redirect('/404');
+          if (e.status === 404) return render404(req, res, next, true);
           else {
             log.error(e.message);
             return next(e);
@@ -328,7 +342,7 @@ router.get(prepareLocaleSet(), leadTracer, (req, res, next) => {
           return res.render('pages/'+data.pageId, d);
         })
         .catch((e) =>{
-          if (e.status === 404) res.redirect('/404');
+          if (e.status === 404) return render404(req, res, next, true);
           else {
             log.error(e.message);
             return next(e);
@@ -345,7 +359,7 @@ router.get('/blog', leadTracer, (req, res, next) => {
   setBlogPage(req.subdomains, req.query.page, region, locale, req.hostname, '/blog')
       .then((data)=> res.render('pages/blog', data))
       .catch((e) =>{
-        if (e.status === 404) res.redirect('/404');
+        if (e.status === 404) return render404(req, res, next);
         else {
           log.error(e.message);
           return next(e);
@@ -358,7 +372,7 @@ router.get('/search', leadTracer, (req, res, next) => {
   setSearchPage(req.subdomains, req.query.page, region, locale, req.hostname, '/search', req.query.tags, req.query.q)
       .then((data)=> res.render('pages/search', data))
       .catch((e) =>{
-        if (e.status === 404) res.redirect('/404');
+        if (e.status === 404) return render404(req, res, next);
         else {
           log.error(e.message);
           return next(e);
@@ -385,7 +399,7 @@ for (const tag of selTags) {
           else res.render('pages/' + data.pageId, data);
         }).
         catch((e) => {
-          if (e.status === 404) res.redirect('/404');
+          if (e.status === 404) return render404(req, res, next);
           else {
             log.error(e.message);
             return next(e);
@@ -410,7 +424,7 @@ router.get('/', leadTracer, (req, res, next) => {
   setIndexPage(req.subdomains, region, locale, req.hostname, url)
       .then((data)=> res.render('pages/'+data.pageId, data))
       .catch((e) =>{
-        if (e.status === 404) res.redirect('/404');
+        if (e.status === 404) return render404(req, res, next);
         else {
           log.error(e.message);
           return next(e);
@@ -427,7 +441,7 @@ router.get('/*', leadTracer, (req, res, next) => {
         else res.render('pages/'+data.pageId, data);
       })
       .catch((e) =>{
-        if (e.status === 404) res.redirect('/404');
+        if (e.status === 404) return render404(req, res, next);
         else {
           log.error(e.message);
           return next(e);
