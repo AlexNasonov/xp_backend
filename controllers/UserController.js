@@ -70,7 +70,7 @@ module.exports = class UserController {
         await mailer.sendMail(email,
             `${host} password reset`,
             `Please follow this link to set a new password: 
-            http://${host}/enter?recoverCode=${code}&recoverEmail=${email}`);
+            ${host}/enter?recoverCode=${code}&recoverEmail=${email}`);
         log.info(`Mail with password reset credentials sent to ${email}`);
         return 'mail sent';
       }
