@@ -383,9 +383,8 @@ router.get('/search', leadTracer, (req, res, next) => {
 router.get('/sitemap.xml', leadTracer, (req, res, next) => {
   const hn = req.hostname;
   const file = (hn !== host)
-      ? path.join(process.env.publicPath, `./sitemaps/sitemap-${hn}.xml`)
-      : path.join(process.env.publicPath, `./sitemap.xml`);
-
+      ? path.join(process.env.publicPath, `./files/sitemaps/sitemap-${hn}.xml`)
+      : path.join(process.env.publicPath, `./files/sitemaps/sitemap.xml`);
   res.sendFile(file);
 });
 
@@ -412,9 +411,10 @@ router.get('/robots.txt', async (req, res, next) => {
   const hn = req.hostname;
   const prefix = (hn !== host && hn !=='localhost') ? hn : '';
   const regex = new RegExp(`.*\(${prefix}-robots.txt)`, 'ig');
-  const dir = await readDir(process.env.publicPath);
+  const dirName = path.join(process.env.publicPath, `./files/robots`);
+  const dir = await readDir(dirName);
   let file = dir.filter((elm) => elm.match(regex))[0];
-  file = path.join(process.env.publicPath, `../public/${file}`);
+  file = path.join(dirName, `./${file}`);
   res.sendFile(file);
 });
 

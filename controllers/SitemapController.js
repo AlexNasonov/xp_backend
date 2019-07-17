@@ -1,7 +1,7 @@
 const fse = require('fs-extra');
 const path = require('path');
 const pubPath = process.env.publicPath;
-const smPath = path.join(pubPath, './sitemaps');
+const smPath = path.join(pubPath, './files/sitemaps');
 const config = require('../modules/config');
 const models = require('../modules/sequelize');
 const locales = config.get('locales');
@@ -154,13 +154,13 @@ module.exports = class SitemapController {
       }
 
       // create main sitemap
-      const fpMain = path.join(pubPath, `./sitemap.xml`);
+      const fpMain = path.join(pubPath, `./files/sitemaps/sitemap.xml`);
       const ws = fse.createWriteStream(fpMain);
       ws.write('<?xml version="1.0" encoding="UTF-8"?>\n' +
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n\n', 'utf8');
       for (const i of sitemaps) {
         ws.write('<sitemap>\n' +
-            '    <loc>https://'+config.get('host')['production']+'/sitemaps/'+i+'</loc>\n' +
+            '    <loc>https://'+config.get('host')['production']+'/public/files/sitemaps/'+i+'</loc>\n' +
             '    <lastmod>'+new Date().toLocaleString()+'</lastmod>\n' +
             '</sitemap>\n\n', 'utf8');
       }
@@ -184,7 +184,7 @@ module.exports = class SitemapController {
       log.info(`[SITEMAP]: worker started`);
       setTimeout(function() {
         return Promise.resolve(SitemapController.generateSitemaps());
-      }, 1000*60*5);
+      }, 1000);
     } else {
       log.info(`[SITEMAP]: worker already loaded`);
     }

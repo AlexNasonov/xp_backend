@@ -8,7 +8,7 @@ const mime = require('mime-types');
 const Logger = require('../modules/logger');
 const log = new Logger(module);
 
-setPath = (p) => path.join(process.env.publicPath, p || '');
+setPath = (p) => path.join(process.env.publicPath, './files', p || '');
 
 module.exports = class FilesController {
   static async readDir(dpath) {
@@ -69,7 +69,6 @@ module.exports = class FilesController {
     try {
       const f = setPath(`./tmp/${name}`);
       const t = setPath(destination+'/'+name);
-
       await fse.move(f, t);
       return path.join('/', destination, name);
     } catch (e) {

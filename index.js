@@ -82,6 +82,11 @@ module.exports = (rootPath, certificate) => {
     fse.ensureDir(paths[i], 0o777);
   }
 
+  for (const i of ['', './sitemaps', './robots', './images']) {
+    fse.ensureDir(path.join(paths.public, './files', i), 0o777);
+  }
+
+
   // view engine setup
   app.set('views', paths.views);
   app.set('view engine', 'ejs');

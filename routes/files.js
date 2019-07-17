@@ -39,13 +39,12 @@ router.delete('/dir', access, (req, res, next) => {
 });
 
 router.post('/upload', access, (req, res, next)=>{
-  const tmp = 'tmp';
 
-  FilesC.createDir(tmp)
+  FilesC.createDir('tmp')
       .then(() => {
         const storage = multer.diskStorage(
             {
-              destination: path.join(process.env.publicPath, tmp),
+              destination: path.join(process.env.publicPath, './files/tmp'),
               filename: function( req, file, cb ) {
                 cb( null, Date.now() + '-' + file.originalname);
               },
