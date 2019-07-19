@@ -89,7 +89,7 @@ module.exports = class PagesController {
    * @param {string} data
    * @return {Promise<*>}
    */
-  static async add(id, data) {
+  static async add(id, data, sitemapBlock) {
     const f = cpath(id);
 
     if (!data.body) {
@@ -130,7 +130,7 @@ module.exports = class PagesController {
       if (data.altLocale) await page.updateDetails('altLocale', data.altLocale);
 
       const res = await this.get(id, false);
-      sitemapC.launchGenerator();
+      if (!sitemapBlock) sitemapC.launchGenerator();
       return res;
     } catch (e) {
       if (fs.existsSync(f)) await deleteFile(f);
@@ -200,7 +200,7 @@ module.exports = class PagesController {
    * @param {object} data
    * @return {Promise<boolean>}
    */
-  static async update(id, data) {
+  static async update(id, data, sitemapBlock) {
     try {
       let page = await Page.findByPk(id);
       if (page) {
@@ -235,7 +235,7 @@ module.exports = class PagesController {
           page.updateDetails('altLocale', al);
         }
 
-        sitemapC.launchGenerator();
+        if (!sitemapBlock) sitemapC.launchGenerator();
         return true;
       } else return false;
     } catch (e) {
@@ -257,21 +257,21 @@ module.exports = class PagesController {
     }
   }
 
-  static async delete(id) {
+  static async delete(id, sitemapBlock) {
     try {
       const f = cpath(id);
       if (fs.existsSync(f)) await deleteFile(f);
 
       const page = await Page.findByPk(id);
       if (page) await page.destroy();
-      sitemapC.launchGenerator();
+      if (!sitemapBlock) sitemapC.launchGenerator();
     } catch (e) {
       log.error(e.message);
       throw e;
     }
   }
 
-  static async deleteAll(filter) {
+  static async deleteAll(filter, sitemapBlock) {
     try {
       const options = {
         where: {},
@@ -300,7 +300,7 @@ module.exports = class PagesController {
       }
 
       const res = await Page.destroy({where: {id: d}});
-      sitemapC.launchGenerator();
+      if (!sitemapBlock) sitemapC.launchGenerator();
       return res;
     } catch (e) {
       log.error(e.message);

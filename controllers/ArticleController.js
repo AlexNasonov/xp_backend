@@ -75,7 +75,7 @@ module.exports = class ArticlesController {
    * @param {string} data
    * @return {Promise<*>}
    */
-  static async add(id, data) {
+  static async add(id, data, sitemapBlock) {
     try {
       const pd = {id: id};
 
@@ -100,7 +100,7 @@ module.exports = class ArticlesController {
 
 
       const res = await this.get(id, false);
-      sitemapC.launchGenerator();
+      if (!sitemapBlock) sitemapC.launchGenerator();
       return res;
     } catch (e) {
       if (e.message === 'Validation error') {
@@ -185,7 +185,7 @@ module.exports = class ArticlesController {
    * @param {object} data
    * @return {Promise<boolean>}
    */
-  static async update(id, data) {
+  static async update(id, data, sitemapBlock) {
     try {
       let text = await Article.findByPk(id);
       if (text) {
@@ -217,7 +217,7 @@ module.exports = class ArticlesController {
           text.updateDetails('altLocale', al);
         }
 
-        sitemapC.launchGenerator();
+        if (!sitemapBlock) sitemapC.launchGenerator();
 
         return true;
       } else return false;
@@ -240,18 +240,18 @@ module.exports = class ArticlesController {
     }
   }
 
-  static async delete(id) {
+  static async delete(id, sitemapBlock) {
     try {
       const text = await Article.findByPk(id);
       if (text) await text.destroy();
-      sitemapC.launchGenerator();
+      if (!sitemapBlock) sitemapC.launchGenerator();
     } catch (e) {
       log.error(e.message);
       throw e;
     }
   }
 
-  static async deleteAll(filter) {
+  static async deleteAll(filter, sitemapBlock) {
     try {
       const options = {
         where: {},
@@ -278,7 +278,7 @@ module.exports = class ArticlesController {
       }
 
       const res = await Article.destroy({where: {id: d}});
-      sitemapC.launchGenerator();
+      if (!sitemapBlock) sitemapC.launchGenerator();
       return res;
     } catch (e) {
       log.error(e.message);

@@ -140,7 +140,6 @@ module.exports = async (sitePath, https, login, password, host) => {
     log.info(`[SITEMAP]: files generation completed`);
 
   } catch (err) {
-    console.log(err);
     log.error('[SITEMAP]: Sitemap generation failed \n'+err);
   }
 
