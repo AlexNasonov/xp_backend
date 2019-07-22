@@ -410,24 +410,11 @@ for (const tag of selTags) {
 router.get('/robots.txt', async (req, res, next) => {
   const hn = req.hostname;
   const prefix = (hn !== host && hn !=='localhost') ? hn : '';
-  console.log('----------------------------- ROBOTS');
-  console.log('PREFIX', prefix);
-
   const regex = new RegExp(`.*\(${prefix}-robots.txt)`, 'ig');
-
-  console.log('REGEX', regex);
   const dirName = path.join(process.env.publicPath, `./files/robots`);
-
-  console.log('DIRNAME', dirName);
   const dir = await readDir(dirName);
-
-  console.log('DIR', dir);
   let file = dir.filter((elm) => elm.match(regex))[0];
-
-  console.log('FILE NAME', file);
   file = path.join(dirName, `./${file}`);
-
-  console.log('FILE PATH', file);
   res.sendFile(file);
 });
 
