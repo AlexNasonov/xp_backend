@@ -262,7 +262,7 @@ async function setIndexPage(subdomains, region, locale, host, url) {
  */
 
 router.get(prepareLocaleSet('blog', true), leadTracer, (req, res, next) => {
-  if (host !== req.hostname) return render404(req, res, next, true);
+  if (![req.hostname, 'www.'+req.hostname].includes(host)) return render404(req, res, next, true);
   const [locale, region, url] = setLRUrl(req.path, 2);
   setBlogPage(req.subdomains, req.query.page, region, locale, req.hostname, url)
       .then((data)=> {
@@ -279,8 +279,9 @@ router.get(prepareLocaleSet('blog', true), leadTracer, (req, res, next) => {
       });
 });
 
+
 router.get(prepareLocaleSet('search', true), leadTracer, (req, res, next) => {
-  if (host !== req.hostname) return render404(req, res, next, true);
+  if (![req.hostname, 'www.'+req.hostname].includes(host)) return render404(req, res, next, true);
   const [locale, region, url] = setLRUrl(req.path, 2);
   setSearchPage(req.subdomains, req.query.page, region, locale, req.hostname, url, req.query.tags, req.query.q)
       .then((data)=> {
@@ -300,7 +301,7 @@ router.get(prepareLocaleSet('search', true), leadTracer, (req, res, next) => {
 
 for (const tag of selTags) {
   router.get(prepareLocaleSet(tag+'/'), leadTracer, (req, res, next) => {
-    if (host !== req.hostname) return render404(req, res, next, true);
+    if (![req.hostname, 'www.'+req.hostname].includes(host)) return render404(req, res, next, true);
     const [locale, region, url] = setLRUrl(req.path, 3);
     setArticlePage(req.subdomains, region, locale, req.hostname, url, tag)
         .then((data)=> {
@@ -321,7 +322,7 @@ for (const tag of selTags) {
 
 
 router.get(prepareLocaleSet(), leadTracer, (req, res, next) => {
-  if (host !== req.hostname) return render404(req, res, next, true);
+  if (![req.hostname, 'www.'+req.hostname].includes(host)) return render404(req, res, next, true);
   const [locale, region, url] = setLRUrl(req.path, 2);
   if (url === '/') {
     setIndexPage(req.subdomains, region, locale, req.hostname, url)
