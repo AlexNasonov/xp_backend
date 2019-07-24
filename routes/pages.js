@@ -321,6 +321,9 @@ for (const tag of selTags) {
 
 
 router.get(prepareLocaleSet(), leadTracer, (req, res, next) => {
+  console.log('HOST', req.hostname);
+  console.log('MIRRORS', mirrors);
+  console.log('INCLUDES', mirrors.includes(req.hostname));
   if (mirrors.includes(req.hostname)) return render404(req, res, next, true);
   const [locale, region, url] = setLRUrl(req.path, 2);
   if (url === '/') {
