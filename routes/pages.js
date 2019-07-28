@@ -111,6 +111,7 @@ render404 = (req, res, next, localeDefined) =>{
 
   setCustomPage(req.subdomains, region, locale, req.hostname, '/404')
       .then((data)=> {
+        res.status(404);
         return res.render('pages/'+data.pageId, data);
       })
       .catch((e) =>{
