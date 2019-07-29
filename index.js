@@ -92,8 +92,8 @@ module.exports = (rootPath, certificate) => {
   app.set('view engine', 'ejs');
 
   app.use(morganLogger('dev'));
-  app.use(bodyParser.json({limit: '50mb'}));
-  app.use(bodyParser.urlencoded({limit: '50mb', extended: true, parameterLimit: 50000}));
+  app.use(bodyParser.json({limit: '500mb'}));
+  app.use(bodyParser.urlencoded({limit: '500mb', extended: true, parameterLimit: 50000}));
   app.use(cookieParser(config.get('appName')));
   app.use('/public', express.static(paths.public, {fallthrough: false}));
 
