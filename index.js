@@ -147,6 +147,7 @@ module.exports = (rootPath, certificate) => {
   app.use(function(err, req, res, next) {
     const error = (['development', 'staging'].includes(app.get('env'))) ? err : {};
     log.error(err.message);
+    log.error(err.stack);
     res.status(error.status || 500);
     res.send(error.message+'\n\n'+error);
   });
