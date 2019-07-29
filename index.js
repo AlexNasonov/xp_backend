@@ -146,7 +146,7 @@ module.exports = (rootPath, certificate) => {
   // production error handler - no stacktraces leaked to user
   app.use(function(err, req, res, next) {
     const error = (['development', 'staging'].includes(app.get('env'))) ? err : {};
-    log.error(error.message);
+    log.error(err.message);
     res.status(error.status || 500);
     res.send(error.message+'\n\n'+error);
   });
