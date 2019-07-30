@@ -1,4 +1,4 @@
-module.exports = (rootPath, certificate) => {
+module.exports = (rootPath, certificate, customRouter) => {
   const customPaths = ['public', 'views', 'logs'];
   const path = require('path');
   const paths = {
@@ -153,6 +153,7 @@ module.exports = (rootPath, certificate) => {
   });
 
   // use routes
+  if (customRouter) app.use(customRouter);
   for (const i of Object.keys(routes.api)) {
     app.use('/api/' + i, routes.api[i]);
   }
