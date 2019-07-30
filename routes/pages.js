@@ -24,16 +24,16 @@ const blogTags = config.get('articlesBlogTags');
 const searchTags = config.get('articlesSearchTags');
 
 prepareLocaleSet = (prefix, strict) => {
-  const l = [];
+  const list = [];
   const pr = prefix || '';
   for (const r of regions) {
     for (const l of locales) {
       let lr = `/${l}-${r}/${pr}`;
       if (!strict) lr = lr+'*';
-      l.push(lr);
+      list.push(lr);
     }
   }
-  return l;
+  return list;
 };
 
 setDefLR = (h) => {
