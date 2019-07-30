@@ -26,15 +26,12 @@ const searchTags = config.get('articlesSearchTags');
 prepareLocaleSet = (prefix, strict) => {
   const l = [];
   const pr = prefix || '';
-  for (const i of locales) {
-    let ls = `/${i}-${i}/${pr}`;
-    if (!strict) ls = ls+'*';
-    l.push(ls);
-  }
-  for (const i of regions) {
-    let rs = `/${locales[0]}-${i}/${pr}`;
-    if (!strict) rs = rs+'*';
-    l.push(rs);
+  for (const r of regions) {
+    for (const l of locales) {
+      let lr = `/${l}-${r}/${pr}`;
+      if (!strict) lr = lr+'*';
+      l.push(lr);
+    }
   }
   return l;
 };
