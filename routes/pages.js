@@ -141,18 +141,21 @@ async function setGeneratedPage(subdomains, pageNumber, region, locale, host, ur
   return res;
 }
 
-async function setBlogPage(subdomains, pageNumber, region, locale, host, url) {
+async function setBlogPage(subdomains, pageNumber, region, locale, host, url, tagFilter) {
   const preset = await setGeneratedPage(subdomains, pageNumber, region, locale, host, url, 20);
   const data = preset.data;
   if (blogTags) {
+    const tagList = (tagFilter && blogTags.includes(tagFilter)) ? [tagFilter] : blogTags;
+
     preset.params.include = [{
       model: models.Tag,
       attributes: ['id'],
-      where: {id: blogTags},
+      where: {id: tagList},
       through: {attributes: []},
     }];
   }
   data.content = await models.Article.findAndCountAll(preset.params);
+
   return data;
 };
 
@@ -265,7 +268,7 @@ async function setIndexPage(subdomains, region, locale, host, url) {
 router.get(prepareLocaleSet('blog', true), leadTracer, (req, res, next) => {
   if (![req.hostname, 'www.'+req.hostname].includes(host)) return render404(req, res, next, true);
   const [locale, region, url] = setLRUrl(req.path, 2);
-  setBlogPage(req.subdomains, req.query.page, region, locale, req.hostname, url)
+  setBlogPage(req.subdomains, req.query.page, region, locale, req.hostname, url, req.query.tag)
       .then((data)=> {
         const d = data;
         d.base_url = data.base_url + `/`+data.locale+'-'+data.region;
@@ -362,7 +365,7 @@ router.get(prepareLocaleSet(), leadTracer, (req, res, next) => {
  */
 router.get('/blog', leadTracer, (req, res, next) => {
   const [locale, region] = setDefLR(req.hostname);
-  setBlogPage(req.subdomains, req.query.page, region, locale, req.hostname, '/blog')
+  setBlogPage(req.subdomains, req.query.page, region, locale, req.hostname, '/blog', req.query.tag)
       .then((data)=> res.render('pages/blog', data))
       .catch((e) =>{
         if (e.status === 404) return render404(req, res, next);
