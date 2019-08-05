@@ -140,7 +140,7 @@ module.exports = class RouteController {
     const data = preset.data;
     if (blogTags) {
       const tagList = (tagFilter && blogTags.includes(tagFilter)) ? [tagFilter] : blogTags;
-
+      preset.params.where.published = true;
       preset.params.include = [{
         model: models.Tag,
         attributes: ['id'],
@@ -183,6 +183,7 @@ module.exports = class RouteController {
     params.where = {
       id: ids,
       locale: locale,
+      published: true,
     };
 
     data.content = await models.Article.findAndCountAll(params);
