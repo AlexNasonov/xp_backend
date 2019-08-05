@@ -85,6 +85,8 @@ module.exports = class RouteController {
       h = host;
       p = (process.env.NODE_ENV === 'staging') ? 'http://' : 'https://';
     }
+    let baseURL = p+h+path.replace(url, '');
+    if (baseURL.endsWith('/')) baseURL = baseURL.slice(0, -1);
     return {
       region: region,
       locale: locale,
@@ -98,7 +100,7 @@ module.exports = class RouteController {
       host: h,
       url: url,
       path: path,
-      base_url: p+h+path.replace(url, ''),
+      base_url: baseURL,
       alts: RouteController.setAlts(locale, url),
       details: instance.details,
     };
