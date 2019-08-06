@@ -263,6 +263,7 @@ module.exports = class RouteController {
     RouteController.setCustomPage(req.subdomains, region, locale, req.hostname, '/404', req.path)
         .then((data)=> {
           res.status(404);
+          data.base_url = data.base_url.replace(lrData[2], '');
           return res.render('pages/'+data.pageId, data);
         })
         .catch((e) =>{
