@@ -159,10 +159,10 @@ module.exports = class SitemapController {
       ws.write('<?xml version="1.0" encoding="UTF-8"?>\n' +
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n\n', 'utf8');
       for (const i of sitemaps) {
-        ws.write('<sitemap>\n' +
+        ws.write('<url>\n' +
             '    <loc>https://'+config.get('host')['production']+'/public/files/sitemaps/'+i+'</loc>\n' +
             '    <lastmod>'+new Date().toLocaleString()+'</lastmod>\n' +
-            '</sitemap>\n\n', 'utf8');
+            '</url>\n\n', 'utf8');
       }
       ws.write('</urlset>\n', 'utf8');
       ws.end();
