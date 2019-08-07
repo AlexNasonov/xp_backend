@@ -1,6 +1,6 @@
 {
   "name": "xp-backend",
-  "version": "19.8.7",
+  "version": "19.8.8",
   "private": true,
   "scripts": {
     "build": "webpack -p",
@@ -9,7 +9,7 @@
     "start-dev": "NODE_ENV=development ./node_modules/nodemon/bin/nodemon.js ./index",
     "start-dev-win": "set NODE_ENV=development&& nodemon ./run.js",
     "start-st-win": "set NODE_ENV=staging&& nodemon ./index",
-    "test": "mocha  --timeout 15000 --exit",
+    "test": "mocha  --timeout 15000 --exit"
   },
   "dependencies": {
     "bcrypt": "^3.0.3",
