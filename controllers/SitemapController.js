@@ -13,6 +13,18 @@ const Logger = require('../modules/logger');
 const log = new Logger(module);
 
 module.exports = class SitemapController {
+
+  static setDate() {
+    const date = new Date();
+    const mm = date.getMonth() + 1; // getMonth() is zero-based
+    const dd = date.getDate();
+
+    return [date.getFullYear(),
+      (mm>9 ? '' : '0') + mm,
+      (dd>9 ? '' : '0') + dd
+    ].join('-');
+  }
+
   static async getItems(e, l, limit, offset) {
     const model = (e==='pages') ? models.Page : models.Article;
     const params = {
@@ -43,7 +55,7 @@ module.exports = class SitemapController {
 
       ws.write('<url>\n' +
           '    <loc>https://'+sd+host+prefix+i[1]+'</loc>\n' +
-          '    <lastmod>'+new Date().toLocaleString()+'</lastmod>\n' +
+          '    <lastmod>'+SitemapController.setDate()+'</lastmod>\n' +
           '    <changefreq>daily</changefreq>\n' +
           '    <priority>'+priority+'</priority>\n' +
           '</url>\n\n', 'utf8');
@@ -161,7 +173,7 @@ module.exports = class SitemapController {
       for (const i of sitemaps) {
         ws.write('<url>\n' +
             '    <loc>https://'+config.get('host')['production']+'/public/files/sitemaps/'+i+'</loc>\n' +
-            '    <lastmod>'+new Date().toLocaleString()+'</lastmod>\n' +
+            '    <lastmod>'+SitemapController.setDate()+'</lastmod>\n' +
             '</url>\n\n', 'utf8');
       }
       ws.write('</urlset>\n', 'utf8');
