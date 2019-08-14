@@ -114,12 +114,16 @@ module.exports = class SitemapController {
       const links = {};
       for (const l of locales) {
         const li = [];
+
         for (const i of items[l]) {
           let tag = false;
 
           if (i.tags) {
+            const tl = [];
+            for (const t of i.tags) tl.push(t.dataValues.id)
+
             for (const t of selTags) {
-              if (i.tags.includes(t)) {
+              if (tl.includes(t)) {
                 tag = `/${t}${i.url}`;
                 li.push([i.subdomain, tag]);
               }
@@ -181,19 +185,18 @@ module.exports = class SitemapController {
       log.info(`[SITEMAP]: file ${fpMain} created`);
 
       log.info(`[SITEMAP]: files generation completed`);
-      process.env.sitemaps_worker = false;
+      process.env.sitemaps_worker = 0;
 
 
     } catch (e) {
       log.error(`[SITEMAP]: files generation failed. ${e}`);
-      console.log(e);
-      process.env.sitemaps_worker = false;
+      process.env.sitemaps_worker = 0;
     }
   }
 
   static launchGenerator() {
-    if (!process.env.sitemaps_worker) {
-      process.env.sitemaps_worker = true;
+    if (process.env.sitemaps_worker !== 1) {
+      process.env.sitemaps_worker = 1;
       log.info(`[SITEMAP]: worker started`);
       setTimeout(function() {
         return Promise.resolve(SitemapController.generateSitemaps());
