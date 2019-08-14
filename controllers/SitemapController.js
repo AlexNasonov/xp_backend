@@ -181,6 +181,7 @@ module.exports = class SitemapController {
       log.info(`[SITEMAP]: file ${fpMain} created`);
 
       log.info(`[SITEMAP]: files generation completed`);
+      process.env.sitemaps_worker = false;
 
 
     } catch (e) {

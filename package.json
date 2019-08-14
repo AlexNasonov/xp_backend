@@ -1,6 +1,6 @@
 {
   "name": "xp-backend",
-  "version": "19.8.8",
+  "version": "19.8.9",
   "private": true,
   "scripts": {
     "build": "webpack -p",
