@@ -13,7 +13,6 @@ const Logger = require('../modules/logger');
 const log = new Logger(module);
 
 module.exports = class SitemapController {
-
   static setDate() {
     const date = new Date();
     const mm = date.getMonth() + 1; // getMonth() is zero-based
@@ -21,7 +20,7 @@ module.exports = class SitemapController {
 
     return [date.getFullYear(),
       (mm>9 ? '' : '0') + mm,
-      (dd>9 ? '' : '0') + dd
+      (dd>9 ? '' : '0') + dd,
     ].join('-');
   }
 
@@ -109,7 +108,6 @@ module.exports = class SitemapController {
       }
 
 
-
       // extract links
       const links = {};
       for (const l of locales) {
@@ -120,7 +118,7 @@ module.exports = class SitemapController {
 
           if (i.tags) {
             const tl = [];
-            for (const t of i.tags) tl.push(t.dataValues.id)
+            for (const t of i.tags) tl.push(t.dataValues.id);
 
             for (const t of selTags) {
               if (tl.includes(t)) {
@@ -139,20 +137,13 @@ module.exports = class SitemapController {
 
       // create sitemaps (see routes/pages.js prepareLocaleSet)
       for (const l of locales) {
-        const prefix = `${l}-${l}`;
-        const name = `sitemap-${prefix}.xml`;
-        const fp = path.join(smPath, `./${name}`);
-        this.createFile(fp, links[l], config.get('host')['production'], '/'+prefix);
-        sitemaps.push(name);
-      }
-
-      for (const i of regions) {
-        const l = locales[0];
-        const prefix = `${l}-${i}`;
-        const name = `sitemap-${prefix}.xml`;
-        const fp = path.join(smPath, `./${name}`);
-        this.createFile(fp, links[l], config.get('host')['production'], '/'+prefix);
-        sitemaps.push(name);
+        for (const i of regions) {
+          const prefix = `${l}-${i}`;
+          const name = `sitemap-${prefix}.xml`;
+          const fp = path.join(smPath, `./${name}`);
+          this.createFile(fp, links[l], config.get('host')['production'], '/'+prefix);
+          sitemaps.push(name);
+        }
       }
 
       // create def sitemap
@@ -186,8 +177,6 @@ module.exports = class SitemapController {
 
       log.info(`[SITEMAP]: files generation completed`);
       process.env.sitemaps_worker = 0;
-
-
     } catch (e) {
       log.error(`[SITEMAP]: files generation failed. ${e}`);
       process.env.sitemaps_worker = 0;
