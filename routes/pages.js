@@ -78,6 +78,7 @@ router.get(RouteC.prepareLocaleSet('search', true), leadTracer, (req, res, next)
 // tag-defined pages like:  /post/post-name
 for (const tag of selTags) {
   router.get(RouteC.prepareLocaleSet(tag+'/'), leadTracer, (req, res, next) => {
+
     const [locale, region, url] = RouteC.setLRUrl(req.hostname.toLowerCase(), req.path.toLowerCase());
     RouteC.setArticlePage(req.subdomains, region, locale, req.hostname, url, tag, req.path)
         .then((data)=> {

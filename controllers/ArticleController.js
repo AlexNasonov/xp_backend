@@ -83,6 +83,7 @@ module.exports = class ArticlesController {
         if (data[i]) pd[i] = data[i];
       }
 
+      pd.url = pd.url.toLowerCase();
       if (!pd.url.startsWith('/')) pd.url = '/'+pd.url;
       if (!data.published) pd.published = false;
       if (data.ogImage) {
@@ -192,6 +193,7 @@ module.exports = class ArticlesController {
         for (const i of ps) {
           if (data[i]) text[i] = data[i];
         }
+        text.url = text.url.toLowerCase();
         if (!text.url.startsWith('/')) text.url = '/'+text.url;
         if (!data.published) text.published = false;
         if (data.ogImage) {

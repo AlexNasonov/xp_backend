@@ -117,6 +117,7 @@ module.exports = class PagesController {
         if (data[i]) pd[i] = data[i];
       }
 
+      pd.url = pd.url.toLowerCase();
       if (!pd.url.startsWith('/')) pd.url = '/'+pd.url;
       if (!data.published) pd.published = false;
       if (data.ogImage) {
@@ -210,6 +211,7 @@ module.exports = class PagesController {
           if (data[i]) page[i] = data[i];
         }
 
+        page.url = '/'+page.url.toLowerCase();
         if (!page.url.startsWith('/')) page.url = '/'+page.url;
         if (!data.published) page.published = false;
 
