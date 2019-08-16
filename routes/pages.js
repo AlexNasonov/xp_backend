@@ -61,6 +61,9 @@ router.get(RouteC.prepareLocaleSet('search', true), leadTracer, (req, res, next)
 
   RouteC.setSearchPage(req.subdomains, req.query.page, region, locale, req.hostname, url, req.query.tags, req.query.q, req.path)
       .then((data)=> {
+        const qString = RouteC.setQuery(req.query);
+        data.url = data.url+qString;
+        data.path = data.path+qString;
         return res.render('pages/search', data);
       })
       .catch((e) =>{

@@ -106,6 +106,22 @@ module.exports = class RouteController {
     };
   };
 
+  static setQuery(query) {
+    try {
+      const keys = Object.keys(query);
+      if (keys.length > 0) {
+        let params = [];
+        for (const i of keys) {
+          params.push(`${i}=${query[i].toString()}`);
+        }
+        return '?'+params.join('&');
+      } else return '';
+
+    } catch (e) {
+      return '';
+    }
+  }
+
   static err404() {
     const e = new Error();
     e.status = 404;
