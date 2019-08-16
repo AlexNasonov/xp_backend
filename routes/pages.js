@@ -56,6 +56,9 @@ router.get(RouteC.prepareLocaleSet('blog', true), leadTracer, (req, res, next) =
 // search pages
 router.get(RouteC.prepareLocaleSet('search', true), leadTracer, (req, res, next) => {
   const [locale, region, url] = RouteC.setLRUrl(req.hostname.toLowerCase(), req.path.toLowerCase());
+
+  if(!req.query.q) return RouteC.render404(req, res, next, true);
+
   RouteC.setSearchPage(req.subdomains, req.query.page, region, locale, req.hostname, url, req.query.tags, req.query.q, req.path)
       .then((data)=> {
         return res.render('pages/search', data);
