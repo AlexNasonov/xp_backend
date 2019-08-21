@@ -211,7 +211,7 @@ module.exports = class PagesController {
           if (data[i]) page[i] = data[i];
         }
 
-        page.url = '/'+page.url.toLowerCase();
+        page.url = page.url.toLowerCase();
         if (!page.url.startsWith('/')) page.url = '/'+page.url;
         if (!data.published) page.published = false;
 
