@@ -64,7 +64,7 @@ router.get('/:entity/tags', access, eCheck, (req, res, next) => {
 });
 
 router.get('/:entity/tags/:tagID', access, eCheck, (req, res, next) => {
-  const r = /^\w+$/;
+  const r = /^[a-zA-Z0-9_\-]+$/;
   if (!r.test(req.params.tagID)) {
     const em = 'id must contain only letters and numbers';
     log.error(em);
