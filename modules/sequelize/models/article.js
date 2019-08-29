@@ -6,13 +6,13 @@ module.exports = function(sequelize, DataTypes) {
   const Model = sequelize.define('article',
       {
         id: {
-          type: DataTypes.STRING(64),
+          type: DataTypes.STRING(255),
           primaryKey: true,
           validate: {notEmpty: true},
         },
 
         url: {
-          type: DataTypes.STRING(128),
+          type: DataTypes.STRING(255),
           validate: {
             notEmpty: true,
           }
