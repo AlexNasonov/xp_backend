@@ -6,13 +6,13 @@ module.exports = function(sequelize, DataTypes) {
   const Model = sequelize.define('redirect',
       {
         old: {
-          type: DataTypes.STRING(128),
+          type: DataTypes.STRING(255),
           validate: {
             notEmpty: true,
           },
         },
         new: {
-          type: DataTypes.STRING(128),
+          type: DataTypes.STRING(255),
           validate: {
             notEmpty: true,
           },
