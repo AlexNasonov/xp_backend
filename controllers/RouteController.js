@@ -57,7 +57,9 @@ module.exports = class RouteController {
     // exclude articlesSelectedTags tag from url to get a clear article url
     const tag = sPath[tagPos];
     if (selTags.includes(tag) && !path.endsWith(tag)) tagPos++;
-    const url = '/'+sPath.slice(tagPos).join('/');
+    let url = '/'+sPath.slice(tagPos).join('/');
+    if (url.endsWith('/')) url = url.slice(0, -1);
+    console.log(url);
     return [locale.toLowerCase(), region.toLowerCase(), url.toLowerCase()];
   };
 
