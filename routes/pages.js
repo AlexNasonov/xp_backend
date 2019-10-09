@@ -39,6 +39,7 @@ router.get('/robots.txt', async (req, res, next) => {
 
 // blog pages
 router.get(RouteC.prepareLocaleSet('blog', true), leadTracer, (req, res, next) => {
+  if (req.path.endsWith('/')) res.redirect(req.path.slice(0, -1));
   const [locale, region, url] = RouteC.setLRUrl(req.hostname.toLowerCase(), req.path.toLowerCase());
   RouteC.setBlogPage(req.subdomains, req.query.page, region, locale, req.hostname, '/blog', req.query.tag, req.path)
       .then((data)=> {
@@ -78,7 +79,7 @@ router.get(RouteC.prepareLocaleSet('search', true), leadTracer, (req, res, next)
 // tag-defined pages like:  /post/post-name
 for (const tag of selTags) {
   router.get(RouteC.prepareLocaleSet(tag+'/'), leadTracer, (req, res, next) => {
-
+    if (req.path.endsWith('/')) res.redirect(req.path.slice(0, -1));
     const [locale, region, url] = RouteC.setLRUrl(req.hostname.toLowerCase(), req.path.toLowerCase());
     RouteC.setArticlePage(req.subdomains, region, locale, req.hostname, url, tag, req.path)
         .then((data)=> {
@@ -109,6 +110,7 @@ router.get(RouteC.prepareLocaleSet('', true), leadTracer, (req, res, next) => {
 });
 
 router.get(RouteC.prepareLocaleSet(''), leadTracer, (req, res, next) => {
+  if (req.path.endsWith('/')) res.redirect(req.path.slice(0, -1));
   const [locale, region, url] = RouteC.setLRUrl(req.hostname.toLowerCase(), req.path.toLowerCase());
   RouteC.setCustomPage(req.subdomains, region, locale, req.hostname, url, req.path)
       .then((data)=> {

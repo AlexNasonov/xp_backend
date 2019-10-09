@@ -59,7 +59,6 @@ module.exports = class RouteController {
     if (selTags.includes(tag) && !path.endsWith(tag)) tagPos++;
     let url = '/'+sPath.slice(tagPos).join('/');
     if (url.endsWith('/')) url = url.slice(0, -1);
-    console.log(url);
     return [locale.toLowerCase(), region.toLowerCase(), url.toLowerCase()];
   };
 
@@ -165,9 +164,9 @@ module.exports = class RouteController {
         where: {id: tagList},
         through: {attributes: []},
       }];
+      preset.params.distinct = true;
     }
     data.content = await models.Article.findAndCountAll(preset.params);
-
     return data;
   };
 
@@ -203,6 +202,8 @@ module.exports = class RouteController {
       locale: locale,
       published: true,
     };
+
+    params.distinct = true;
 
     data.content = await models.Article.findAndCountAll(params);
     data.content.query = q;
