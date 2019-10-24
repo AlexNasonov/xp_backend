@@ -6,7 +6,7 @@
     "build": "webpack -p",
     "app": "node ./run",
     "start": "node ./index",
-    "start-dev": "NODE_ENV=development ./node_modules/nodemon/bin/nodemon.js ./index",
+    "start-dev": "NODE_ENV=development ./node_modules/nodemon/bin/nodemon.js ./run",
     "start-dev-win": "set NODE_ENV=development&& nodemon ./run.js",
     "start-st-win": "set NODE_ENV=staging&& nodemon ./index",
     "test": "mocha  --timeout 15000 --exit"
